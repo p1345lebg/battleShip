@@ -331,22 +331,22 @@ class Boat1(DaddyBoat):
     relativeCoordinates = {(0,0) : {'u' : 0, 'v' : 0, 'w' : 16, 'h' : 16}}
 
 class Boat2x(DaddyBoat):
-    relativeCoordinates = {(0,0) : {}, 
-                           (1,0) : {}}
+    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16}, 
+                           (1,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180}}
 
 class Boat2y(DaddyBoat):
-    relativeCoordinates = {(0,0) : {}, 
-                           (0,1) : {}}
+    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90}, 
+                           (0,1) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}}
 
 class Boat3x(DaddyBoat):
-    relativeCoordinates = {(0,0) : {}, 
-                           (1,0) : {}, 
-                           (2,0) : {}}
+    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16}, 
+                           (1,0) : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16}, 
+                           (2,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180}}
 
 class Boat3y(DaddyBoat):
-    relativeCoordinates = {(0,0) : {}, 
-                           (0,1) : {}, 
-                           (0,2) : {}}
+    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90}, 
+                           (0,1) : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90}, 
+                           (0,2) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}}
 
 class BoalLtl(DaddyBoat):
     relativeCoordinates = {(0,0) : {},
