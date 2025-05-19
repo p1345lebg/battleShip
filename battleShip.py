@@ -8,6 +8,8 @@ class App:
 
     def __init__(self):
         pyxel.init(256,256,title="Nuit du code", fps=60)
+        pyxel.load('assets/battleShip.pyxres')
+
         self.upgrades = [("+1 HITPOINT",15),("+3 HITPOINTS",40),("-RELOADTIME",17),("+3 MONEY @ END", 9)]
         self.grillep1 = Grille()
         self.grillep2 = Grille(128,128)
@@ -279,26 +281,28 @@ class Player:
 
 class DaddyBoat:
 
-    relativeCoordinates : list[tuple[int,int]] = []
+    relativeCoordinates : dict[tuple[int,int], dict[str, int]] = {}
     
     def __init__(self, grid : "Grille", coord : tuple[int,int], is_trap : bool = False):
         self.grid = grid
         self.size = grid.tileSize
-        self.coordinates : dict[tuple[int,int], bool] = {}
-        for i in self.relativeCoordinates:
-            self.coordinates[(coord[0]+i[0],coord[1]+i[1])] = True
+        self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {}
+        for key, value in self.relativeCoordinates.items():
+            self.coordinates[(coord[0]+key[0],coord[1]+key[1])] = {'alive' : True, 'textureKwargs' : value}
+
+        self.alive : bool = True if self.coordinates else False
 
         self.is_trap = is_trap
-        self.is_dead = False
+        
 
     def get_coordinates(self) -> list[tuple[int,int]]:
         return self.coordinates.keys()
         
     def get_shot(self, coord : tuple[int,int]) -> bool:
-        if coord in self.coordinates and self.coordinates[coord]:
-            self.coordinates[coord] = False
-            if not (True in self.coordinates.values()):
-                self.is_dead = False
+        if coord in self.coordinates and self.coordinates[coord]['alive']:
+            self.coordinates[coord]['alive'] = False
+            if all(boat['alive'] == False for boat in self.coordinates.values()):
+                self.alive = False
             return True
         
         return False
@@ -307,39 +311,62 @@ class DaddyBoat:
     
     def draw(self):
         for key, value in self.coordinates.items():
-            if value:
-                pyxel.rect(self.grid.offsetx+2+key[0]*self.size,
-                           self.grid.offsetx+2+key[1]*self.size,
-                           self.size-4,
-                           self.size-4,
-                           7)
+            if value['alive']:
+                if value['textureKwargs'] and all(i in value['textureKwargs'] for i in ['u','v','w','h']):
+                    pyxel.blt(
+                        x=self.grid.offsetx+key[0]*self.size,
+                        y=self.grid.offsety+key[1]*self.size,
+                        img=0,
+                        colkey=0,
+                        **value['textureKwargs']
+                    )
+                else:
+                    pyxel.rect(self.grid.offsetx+2+key[0]*self.size,
+                            self.grid.offsetx+2+key[1]*self.size,
+                            self.size-4,
+                            self.size-4,
+                            7)
     
 class Boat1(DaddyBoat):
-    relativeCoordinates = [(0,0)]
+    relativeCoordinates = {(0,0) : {'u' : 0, 'v' : 0, 'w' : 16, 'h' : 16}}
 
 class Boat2x(DaddyBoat):
-    relativeCoordinates = [(0,0), (1,0)]
+    relativeCoordinates = {(0,0) : {}, 
+                           (1,0) : {}}
 
 class Boat2y(DaddyBoat):
-    relativeCoordinates = [(0,0), (0,1)]
+    relativeCoordinates = {(0,0) : {}, 
+                           (0,1) : {}}
 
 class Boat3x(DaddyBoat):
-    relativeCoordinates = [(0,0), (1,0), (2,0)]
+    relativeCoordinates = {(0,0) : {}, 
+                           (1,0) : {}, 
+                           (2,0) : {}}
 
 class Boat3y(DaddyBoat):
-    relativeCoordinates = [(0,0), (0,1), (0,2)]
+    relativeCoordinates = {(0,0) : {}, 
+                           (0,1) : {}, 
+                           (0,2) : {}}
 
 class BoalLtl(DaddyBoat):
-    relativeCoordinates = [(0,0),(1,0), (0,1)]
+    relativeCoordinates = {(0,0) : {},
+                           (1,0) : {},
+                           (0,1) : {}}
 
 class BoatLtr(DaddyBoat):
-    relativeCoordinates = [(0,0),(-1,0), (0,1)]
+    relativeCoordinates = {(0,0) : {},
+                           (-1,0): {}, 
+                           (0,1) : {}}
 
 class BoatLbl(DaddyBoat):
-    relativeCoordinates = [(0,0),(1,0), (0,-1)]
+    relativeCoordinates = {(0,0) : {}, 
+                           (1,0) : {}, 
+                           (0,-1): {}}
 
 class BoatLbr(DaddyBoat):
-    relativeCoordinates = [(0,0),(-1,0), (0,-1)]
+    relativeCoordinates = {(0,0) : {},
+                           (-1,0): {}, 
+                           (0,-1): {}}
 
 
 class Cursor :
