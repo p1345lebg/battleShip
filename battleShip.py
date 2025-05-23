@@ -210,7 +210,7 @@ class App:
             case 3:
                 pyxel.cls(1)
                 pyxel.text(110,128,self.winner + " wins",7)
-                pyxel.text(100,137,"press spacebar to start again",7)
+                pyxel.text(100,137,"press spacebar to start again and be beautifull",7)
 
 
 
@@ -247,7 +247,7 @@ class Player:
         self.cooldown = 0
         self.hp = 9
         self.hp_left = 9
-        self.set : list[DaddyBoat] = [Boat1,Boat3x,Boat2x,Boat3y] #liste de 4 bateaux
+        self.set : list[DaddyBoat] = [Boat1,Boat3x,Boat2x,BoalLtl] #liste de 4 bateaux
         self.money = 0
         self.frames_between_shoot = [20,40] #(tir réussi, tir raté)
         self.bonus_money =  0 # argent en + par round
@@ -349,9 +349,9 @@ class Boat3y(DaddyBoat):
                            (0,2) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}}
 
 class BoalLtl(DaddyBoat):
-    relativeCoordinates = {(0,0) : {},
-                           (1,0) : {},
-                           (0,1) : {}}
+    relativeCoordinates = {(0,0) : {'u' : 48, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90},
+                           (1,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180},
+                           (0,1) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}}
 
 class BoatLtr(DaddyBoat):
     relativeCoordinates = {(0,0) : {},
