@@ -157,9 +157,9 @@ class App:
                     pyxel.text(20,38,"le plus rapidement possible",7)
                     pyxel.text(20,44,"joueur 1 :  curseur bleu ; joueur 2 : curseur rouge",7)
                     pyxel.text(20,50,"mouvement : ",7)
-                    pyxel.text(20,56,"joueur 1 : ZQSD  ;  joueur 2 : les fleches",7)
+                    pyxel.text(20,56,"joueur 1 : les fleches ;  joueur 2 : ZQSD ",7)
                     pyxel.text(20,62, "TIR :",7)
-                    pyxel.text(20,68,"joueur 1 : V  ;  joueur 2 : \" ; \" ",7)
+                    pyxel.text(20,68,"joueur 1 :  \" m \"  ; joueur 2 : \" v \" ",7)
                 else :
                     pyxel.cls(1)
                     pyxel.text(110,128,"Mashbattleship",7)
@@ -179,20 +179,24 @@ class App:
                     else : pyxel.text(128,128,"1",7)
                 else:
                     pyxel.cls(13)
-                    pyxel.rect(0,0,127,127,11)
-                    pyxel.rect(128,128,127,127,11)
+                    pyxel.rect(128,0,128,128,5)
+                    pyxel.rect(0,128,128,128,14)
                     self.grillep1.draw(3,11)
                     self.grillep2.draw(4,9)
                     #dessiner les curseurs
                     self.player0.cursor.drawcursor()
                     self.player1.cursor.drawcursor()
-                    #UI joueur 1
+
+
+                    #--------UI joueur 1-----------
                     pyxel.text(140,20,"money : " + str(self.player0.money),7)
-                    pyxel.text(140,25,"hp : " + str(self.player0.hp_left),7)
-                    #UI joueur 2
+                    pyxel.rect(140,115,110,10,0)
+                    pyxel.rect(142,117, (106* self.player0.hp_left) / self.player0.hp ,6,3)
+                    #--------UI joueur 2-----------
                     
-                    pyxel.text(20,140,"money : " + str(self.player1.money),7)
-                    pyxel.text(20,145,"hp : " + str(self.player1.hp_left),7)
+                    pyxel.text(20,150,"money : " + str(self.player1.money),7)
+                    pyxel.rect(5,133,110,10,0)
+                    pyxel.rect(7,135, (106* self.player1.hp_left) / self.player1.hp ,6,4)
 
                 
             
@@ -202,7 +206,6 @@ class App:
                 pyxel.text(5,5,"SHOP",7)
                 pyxel.rect(20,10,210,50,5)
                 pyxel.rect(20,70,210,150,5)
-                shop_populate()
                 for i in range(4):
                     pyxel.rect(27 + 50*i,15,45,43,13)
                     pyxel.rect(27 + 50*i,80,45,130,13)
@@ -220,18 +223,18 @@ class App:
 class Player:
     keys_dict : dict[int, dict[str, int]] = {
         0 : {
+            "key up" : pyxel.KEY_UP ,
+            "key down" : pyxel.KEY_DOWN,
+            "key left" : pyxel.KEY_LEFT,
+            "key right" : pyxel.KEY_RIGHT,
+            "key shoot" : pyxel.KEY_M
+        },
+        1 : {
             "key up" : pyxel.KEY_Z ,
             "key down" : pyxel.KEY_S,
             "key left" : pyxel.KEY_Q,
             "key right" : pyxel.KEY_D,
             "key shoot" : pyxel.KEY_V
-        },
-        1 : {
-            "key up" : pyxel.KEY_UP ,
-            "key down" : pyxel.KEY_DOWN,
-            "key left" : pyxel.KEY_LEFT,
-            "key right" : pyxel.KEY_RIGHT,
-            "key shoot" : pyxel.KEY_SEMICOLON
         }
     }
 
