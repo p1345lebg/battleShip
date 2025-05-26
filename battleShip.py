@@ -162,7 +162,7 @@ class App:
                     pyxel.text(20,68,"joueur 1 :  \" m \"  ; joueur 2 : \" v \" ",7)
                 else :
                     pyxel.cls(1)
-                    pyxel.text(110,128,"Mashbattleship",7)
+                    pyxel.text(110,70,"Mashbattleship",7)
                     pyxel.text(100,135,"press spacebar to start",7)
                     pyxel.text(100,140,"press t for tutorial",7)
 
