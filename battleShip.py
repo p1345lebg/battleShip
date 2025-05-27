@@ -482,8 +482,10 @@ class Grille :
     
     def add_fake_boat(self, boat):
         coords = []
+        stop = 10
         ok = False
-        while not ok:
+        while not ok or stop > 0:
+            stop -= 1
             boat = DaddyBoat
             x = random.randrange(self.width)
             y = random.randrange(self.height)
