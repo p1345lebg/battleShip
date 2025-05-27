@@ -317,6 +317,8 @@ class DaddyBoat:
             self.coordinates[coord]['alive'] = False
             if all(boat['alive'] == False for boat in self.coordinates.values()):
                 self.alive = False
+            if self.is_fake:
+                return False
             return True
         
         return False
