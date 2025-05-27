@@ -5,7 +5,6 @@ import random
 class App:
     gamestate : int = 0 # 0 = main menu ; 1 = principal ; 2 = shop ; 3 = FIN
     
-
     def __init__(self):
         pyxel.init(256,256,title="Nuit du code", fps=60)
         pyxel.load('assets/battleShip.pyxres')
@@ -22,7 +21,6 @@ class App:
         #on est obligé de faire ça pour avoir l'autre joueur dans les 2
         self.player0.set_opponent(self.player1)
         self.player1.set_opponent(self.player0)
-
         self.tutorial = False
 
         pyxel.run(self.update,self.draw)
@@ -47,10 +45,13 @@ class App:
                     self.player1.place_set()
                 if pyxel.btnp(pyxel.KEY_T) :
                     self.tutorial = not self.tutorial                # logique pour le maineenu
+
+
+
             case 1:
                 for i in self.player1.debuffs :
                     match i[0]:
-                        case _ : pass
+                        case _ : print("non")
                 if self.arrived_game > 0 :
                     self.arrived_game-=1
                 else:
@@ -134,7 +135,8 @@ class App:
                     self.player0.frames_between_shoot = [self.player0.frames_between_shoot[0] -1, self.player0.frames_between_shoot[1] -1]
                 if pyxel.btnp(pyxel.KEY_KP_2) :
                     self.player1.frames_between_shoot = [self.player1.frames_between_shoot[0] -1, self.player1.frames_between_shoot[1] -1]
-                    
+
+
                         
             case 3:
                 if pyxel.btnp(pyxel.KEY_SPACE):
@@ -147,9 +149,11 @@ class App:
                 
 
     
+
     def draw(self):
         match App.gamestate:
             case 0:
+                #graphismes pour le main menu
                 if self.tutorial :
                     pyxel.cls(1)
                     pyxel.text(50,26,"ceci est un jeu de bataille navale différent",7)
@@ -166,7 +170,7 @@ class App:
                     pyxel.text(100,135,"press spacebar to start",7)
                     pyxel.text(100,140,"press t for tutorial",7)
 
-                #graphismes pour le main menu
+
 
             case 1:
                 #graphismes jeu principal
@@ -177,29 +181,34 @@ class App:
                     elif self.arrived_game > 20 :
                         pyxel.text(128,128,"2",7)
                     else : pyxel.text(128,128,"1",7)
+
                 else:
                     pyxel.cls(13)
                     pyxel.rect(128,0,128,128,5)
                     pyxel.rect(0,128,128,128,14)
+                    
                     self.grillep1.draw(3,11)
                     self.grillep2.draw(4,9)
+
                     #dessiner les curseurs
                     self.player0.cursor.drawcursor()
                     self.player1.cursor.drawcursor()
 
-
                     #--------UI joueur 1-----------
-                    pyxel.text(140,20,"money : " + str(self.player0.money),7)
                     pyxel.rect(140,115,110,10,0)
                     pyxel.rect(142,117, (106* self.player0.hp_left) / self.player0.hp ,6,3)
+
+                    pyxel.text(147,101,str(self.player0.money),7)
+                    pyxel.blt(140,100,1,0,16,8,8,0)
                     #--------UI joueur 2-----------
-                    
-                    pyxel.text(20,150,"money : " + str(self.player1.money),7)
                     pyxel.rect(5,133,110,10,0)
                     pyxel.rect(7,135, (106* self.player1.hp_left) / self.player1.hp ,6,4)
 
-                
-            
+                    pyxel.text(10,146,str(self.player1.money),7)
+                    pyxel.blt(3,145,1,0,16,8,8,0)
+
+
+
             case 2:
                 #shop
                 pyxel.cls(1)
@@ -209,11 +218,13 @@ class App:
                 for i in range(4):
                     pyxel.rect(27 + 50*i,15,45,43,13)
                     pyxel.rect(27 + 50*i,80,45,130,13)
-            
+
+
+
             case 3:
                 pyxel.cls(1)
                 pyxel.text(110,128,self.winner + " wins",7)
-                pyxel.text(100,137,"press spacebar to start again and be beautifull",7)
+                pyxel.text(100,137,"press spacebar to start again",7)
 
 
 
@@ -395,6 +406,7 @@ class Cursor :
         if self.opponentGrid.shoot_boat((self.pos[0], self.pos[1])):
             self.player.cooldown = self.player.frames_between_shoot[0]
             self.player.opponent.hp_left -= 1
+            self.player.money += 1
         else:
             self.player.cooldown = self.player.frames_between_shoot[1]
     
@@ -513,7 +525,8 @@ def debuff_snare(player : Player,debuff_index):
     #fin 
     if player.debuffs[debuff_index][1] == 0 :
         player.frames_between_shoot = 0
-        
+
+
     
 #--------------------------------
 #----------FUNC DRAWS------------
