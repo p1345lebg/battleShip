@@ -278,16 +278,16 @@ class Player:
         hp = self.hp
         while hp > 0:
             n = 0
-            temp = random.choice(self.set)
-            if temp == Boat1:
+            boat = random.choice(self.set)
+            if boat in [Boat1]:
                 n = 1
-            elif temp == Boat2x or temp == Boat2y:
+            elif boat in [Boat2x,Boat2y]:
                 n = 2
-            else:
+            elif boat in [Boat3x,Boat3y,BoalLtl,BoatLtr,BoatLbr,BoatLbl]:
                 n = 3
             if n <= hp:
                 hp -= n
-                finalSet.append(temp)
+                finalSet.append(boat)
 
         self.grid.generate_boat(finalSet)
 
@@ -468,6 +468,13 @@ class Grille :
                 if ok:
                     coords += temp.get_coordinates()
                     self.boats.append(temp)
+                else:
+                    if boat in [Boat1]:
+                        n = 1
+                    elif boat in [Boat2x,Boat2y]:
+                        n = 2
+                    elif boat in [Boat3x,Boat3y,BoalLtl,BoatLtr,BoatLbr,BoatLbl]:
+                        n = 3
                 stop -= 1
         for boat in self.boats:
             for coord in boat.coordinates:
