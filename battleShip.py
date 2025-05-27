@@ -297,7 +297,7 @@ class DaddyBoat:
     #coordonnées relative au type du bateau
     relativeCoordinates : dict[tuple[int,int], dict[str, int]] = {} #{coordonnées relatifs a ceux données lors de l'initialisation  : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}
     
-    def __init__(self, grid : "Grille", coord : tuple[int,int], is_trap : bool = False):
+    def __init__(self, grid : "Grille", coord : tuple[int,int], *,is_trap : bool = False, is_fake : bool = False):
         self.grid = grid
         self.size = grid.tileSize
         self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {} #{coordonnées : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}
@@ -307,6 +307,7 @@ class DaddyBoat:
         self.alive : bool = True if self.coordinates else False
 
         self.is_trap = is_trap
+        self.is_fake = is_fake
         
 
     def get_coordinates(self) -> list[tuple[int,int]]:
@@ -334,7 +335,7 @@ class DaddyBoat:
                         colkey=0,
                         **value['textureKwargs']
                     )
-                else: #dessine latexture par défaut (carré blanc)
+                else: #dessine la texture par défaut (carré blanc)
                     pyxel.rect(self.grid.offsetx+2+key[0]*self.size,
                             self.grid.offsetx+2+key[1]*self.size,
                             self.size-4,
@@ -423,7 +424,7 @@ class Grille :
         self.offsety = offsety
 
         self.boats : list[DaddyBoat] = []
-        self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : batteau a ces coordonnées}
+        self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : bateau a ces coordonnées}
 
         
         
@@ -484,9 +485,10 @@ class Grille :
         coords = []
         ok = False
         while not ok:
+            boat = DaddyBoat
             x = random.randrange(self.width)
             y = random.randrange(self.height)
-            temp = boat(self, (x,y))
+            temp = boat(self, (x,y), is_fake=True)
             for coord in temp.get_coordinates():
                 if coord in coords or not (self.on_grid(coord)):
                     ok = False
@@ -494,6 +496,9 @@ class Grille :
             if ok:
                 coords += temp.get_coordinates()
                 self.boats.append(temp)
+
+    def add_trap_to_boat(self):
+        pass
             
 #--------------------------------
 #----------FUNC LOGIC------------
