@@ -294,13 +294,13 @@ class Player:
 
 
 class DaddyBoat:
-
-    relativeCoordinates : dict[tuple[int,int], dict[str, int]] = {}
+    #coordonnées relative au type du bateau
+    relativeCoordinates : dict[tuple[int,int], dict[str, int]] = {} #{coordonnées relatifs a ceux données lors de l'initialisation  : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}
     
     def __init__(self, grid : "Grille", coord : tuple[int,int], is_trap : bool = False):
         self.grid = grid
         self.size = grid.tileSize
-        self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {}
+        self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {} #{coordonnées : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}
         for key, value in self.relativeCoordinates.items():
             self.coordinates[(coord[0]+key[0],coord[1]+key[1])] = {'alive' : True, 'textureKwargs' : value}
 
@@ -326,7 +326,7 @@ class DaddyBoat:
     def draw(self):
         for key, value in self.coordinates.items():
             if value['alive']:
-                if value['textureKwargs'] and all(i in value['textureKwargs'] for i in ['u','v','w','h']):
+                if value['textureKwargs'] and all(i in value['textureKwargs'] for i in ['u','v','w','h']): #verifie que toutes les données necessaire a l'image sont présente
                     pyxel.blt(
                         x=self.grid.offsetx+key[0]*self.size,
                         y=self.grid.offsety+key[1]*self.size,
@@ -334,7 +334,7 @@ class DaddyBoat:
                         colkey=0,
                         **value['textureKwargs']
                     )
-                else:
+                else: #dessine latexture par défaut (carré blanc)
                     pyxel.rect(self.grid.offsetx+2+key[0]*self.size,
                             self.grid.offsetx+2+key[1]*self.size,
                             self.size-4,
@@ -423,7 +423,7 @@ class Grille :
         self.offsety = offsety
 
         self.boats : list[DaddyBoat] = []
-        self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {}
+        self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : batteau a ces coordonnées}
 
         
         
