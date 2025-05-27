@@ -496,8 +496,11 @@ class Grille :
                 coords += temp.get_coordinates()
                 self.boats.append(temp)
 
-    def add_trap_to_boat(self):
-        pass
+    def add_trap_to_boat(self, trap_amount):
+        boats = random.choices(self.coordinatesBoat.items(), k=trap_amount)
+        for coordinates, boat in boats:
+            boat : DaddyBoat
+            boat.coordinates[coordinates]['is_trap'] = True
             
 #--------------------------------
 #----------FUNC LOGIC------------
