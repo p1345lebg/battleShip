@@ -313,10 +313,14 @@ class DaddyBoat:
         return self.coordinates.keys()
         
     def get_shot(self, coord : tuple[int,int]) -> bool:
+        # verifie que les bateau soit bien a ces coordonnées et qu'il soit bien en vie
         if coord in self.coordinates and self.coordinates[coord]['alive']:
             self.coordinates[coord]['alive'] = False
+            # verifie que le bateau soit entierement mort
             if all(boat['alive'] == False for boat in self.coordinates.values()):
                 self.alive = False
+
+            #verifie si le bateau est un faux
             if self.is_fake:
                 return False
             return True
@@ -430,11 +434,13 @@ class Grille :
         
         
     def on_grid(self, coord : tuple[int,int]):
+        # verifie que les coordonnées soient bien sur la grille
         if 0 <= coord[0] < self.width and 0 <= coord[1] < self.height:
             return True
         return False
     
     def shoot_boat(self, coord : tuple[int,int]) -> bool:
+        # retour demande au bateau si il a été touché si il est sur cette case sinon retourne False
         if coord in self.coordinatesBoat:
             return self.coordinatesBoat[coord].get_shot(coord)
         return False
@@ -453,23 +459,29 @@ class Grille :
             boat.draw()
     
     def generate_boat(self, boats_list : list[DaddyBoat]):
+        # reiniitalise la grille
         self.boats = []
         coords : list[tuple[int,int]] = []
+        # parcours tout les bateaux qu'on souhaite placer
         for boat in boats_list:
             stop = 10
             ok = False
+            # essaye de placer les bateaux
             while not (ok or stop <= 0):
                 ok = True
                 x = random.randrange(self.width)
                 y = random.randrange(self.height)
                 temp = boat(self, (x,y))
+                # verifie que le batteau de touche aucun autre batteau deja placé
                 for coord in temp.get_coordinates():
                     if coord in coords or not (self.on_grid(coord)):
                         ok = False
                         break
+                # ajoute le bateau si les conditions précédantes sont respectées
                 if ok:
                     coords += temp.get_coordinates()
                     self.boats.append(temp)
+                # sinon retire la vie associées au joueur (en développement)
                 else:
                     if boat in [Boat1]:
                         n = 1
@@ -482,25 +494,28 @@ class Grille :
             for coord in boat.coordinates:
                 self.coordinatesBoat[coord] = boat
     
-    def add_fake_boat(self, boat):
+    def add_fake_boat(self, boat : DaddyBoat):
         coords = []
         stop = 10
         ok = False
+        # essaye de placer les bateaux
         while not ok or stop > 0:
             stop -= 1
-            boat = DaddyBoat
             x = random.randrange(self.width)
             y = random.randrange(self.height)
             temp = boat(self, (x,y), is_fake=True)
+            # verifie que le batteau de touche aucun autre batteau deja placé
             for coord in temp.get_coordinates():
                 if coord in coords or not (self.on_grid(coord)):
                     ok = False
                     break
+            # ajoute le bateau si les conditions précédantes sont respectées
             if ok:
                 coords += temp.get_coordinates()
                 self.boats.append(temp)
 
     def add_trap_to_boat(self, trap_amount):
+        #selectionne une coordonnée aléatoire possedant un ou plisieurs bateaux puis défini cette case come piégée
         boats = random.choices(self.coordinatesBoat.items(), k=trap_amount)
         for coordinates, boat in boats:
             boat : DaddyBoat
