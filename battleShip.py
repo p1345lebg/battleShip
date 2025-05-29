@@ -313,7 +313,7 @@ class DaddyBoat:
     def __init__(self, grid : "Grille", coord : tuple[int,int], *, is_fake : bool = False):
         self.grid = grid
         self.size = grid.tileSize
-        self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {} #{coordonnées : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}
+        self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {} #{coordonnées : {'alive' (et 'dead'){kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}
         for key, value in self.relativeCoordinates.items():
             self.coordinates[(coord[0]+key[0],coord[1]+key[1])] = {'alive' : True, 'is_trap' : False, 'textureKwargs' : value}
 
@@ -345,13 +345,13 @@ class DaddyBoat:
     def draw(self):
         for key, value in self.coordinates.items():
             if value['alive']:
-                if value['textureKwargs'] and all(i in value['textureKwargs'] for i in ['u','v','w','h']): #verifie que toutes les données necessaire a l'image sont présente
+                if 'alive' in value['textureKwargs'] and all(i in value['textureKwargs']['alive'] for i in ['u','v','w','h']): #verifie que toutes les données necessaire a l'image sont présente
                     pyxel.blt(
                         x=self.grid.offsetx+key[0]*self.size,
                         y=self.grid.offsety+key[1]*self.size,
                         img=0,
                         colkey=0,
-                        **value['textureKwargs']
+                        **value['textureKwargs']['alive']
                     )
                 else: #dessine la texture par défaut (carré blanc)
                     pyxel.rect(self.grid.offsetx+2+key[0]*self.size,
@@ -359,32 +359,54 @@ class DaddyBoat:
                             self.size-4,
                             self.size-4,
                             7)
-    
+            else:
+                if 'dead' in value['textureKwargs'] and all(i in value['textureKwargs']['dead'] for i in ['u','v','w','h']): #verifie que toutes les données necessaire a l'image sont présente
+                    pyxel.blt(
+                        x=self.grid.offsetx+key[0]*self.size,
+                        y=self.grid.offsety+key[1]*self.size,
+                        img=0,
+                        colkey=1,
+                        **value['textureKwargs']['dead']
+                    )
 class Boat1(DaddyBoat):
-    relativeCoordinates = {(0,0) : {'u' : 0, 'v' : 0, 'w' : 16, 'h' : 16}}
+    relativeCoordinates = {(0,0) : {'alive' : {'u' : 0, 'v' : 0, 'w' : 16, 'h' : 16},
+                                    'dead' : {'u' : 0, 'v' : 16, 'w' : 16, 'h' : 16}}}
 
 class Boat2x(DaddyBoat):
-    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16}, 
-                           (1,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180}}
+    relativeCoordinates = {(0,0) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16}}, 
+                           (1,0) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : 180}}}
 
 class Boat2y(DaddyBoat):
-    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90}, 
-                           (0,1) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}}
+    relativeCoordinates = {(0,0) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : 90}}, 
+                           (0,1) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : -90}}}
 
 class Boat3x(DaddyBoat):
-    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16}, 
-                           (1,0) : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16}, 
-                           (2,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180}}
+    relativeCoordinates = {(0,0) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16}}, 
+                           (1,0) : {'alive' : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16},
+                                    'dead' : {'u' : 32, 'v' : 16, 'w' : 16, 'h' : 16}}, 
+                           (2,0) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : 180}}}
 
 class Boat3y(DaddyBoat):
-    relativeCoordinates = {(0,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90}, 
-                           (0,1) : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90}, 
-                           (0,2) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}}
+    relativeCoordinates = {(0,0) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : 90}}, 
+                           (0,1) : {'alive' : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 90},
+                                    'dead' : {'u' : 32, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : 90}}, 
+                           (0,2) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : -90}}}
 
 class BoalLtl(DaddyBoat):
-    relativeCoordinates = {(0,0) : {'u' : 48, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90},
-                           (1,0) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180},
-                           (0,1) : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}}
+    relativeCoordinates = {(0,0) : {'alive' : {'u' : 48, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90},
+                                    'dead' : {'u' : 48, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : -90}},
+                           (1,0) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : 180},
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : 180}},
+                           (0,1) : {'alive' : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'rotate' : -90}, 
+                                    'dead' : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'rotate' : -90}}}
 
 class BoatLtr(DaddyBoat):
     relativeCoordinates = {(0,0) : {},
