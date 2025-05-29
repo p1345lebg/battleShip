@@ -10,24 +10,36 @@ class App:
         pyxel.load('assets/battleShip.pyxres')
 
         self.upgrades = [("+1 HITPOINT",15),("+3 HITPOINTS",40),("-RELOADTIME",17),("+3 MONEY @ END", 9)]
-        self.grillep1 = Grille()
-        self.grillep2 = Grille(128,128)
         self.winner = "player 1"
         self.shoplist = []
         self.arrived_shop = True
         self.arrived_game = 60
-        self.player0 = Player(0, self.grillep1)
-        self.player1 = Player(1, self.grillep2)
-        #on est obligé de faire ça pour avoir l'autre joueur dans les 2
-        self.player0.set_opponent(self.player1)
-        self.player1.set_opponent(self.player0)
+        self.players : list[Player] = []
+        self.add_player(Player(self, 0, (0,0), (3,11), 3))
+        self.add_player(Player(self, 1, (128,128), (4,9), 9))
         self.tutorial = False
 
         pyxel.run(self.update,self.draw)
+
+    def add_player(self, player : 'Player'):
+        # ajoute le joueur a la liste d'ennemies des autres joueurs, de même dans l'autre sens
+        for p in self.players:
+            player.add_opponent(p)
+            p.add_opponent(player)
+        # ajoute le joueur a la liste des joueurs
+        self.players.append(player)
+
+    def remove_player(self, player):
+        self.players.remove(player)
+        # retire le joueur de la liste d'ennemie des autres joueurs
+        for p in self.players:
+            p.remove_opponent(player)
     
     def update(self):
         if pyxel.btnp(pyxel.KEY_I):
             App.gamestate = 1
+            for player in self.players:
+                player.place_set()
             self.player0.place_set()
             self.player1.place_set()
         elif pyxel.btnp(pyxel.KEY_O):
@@ -41,70 +53,43 @@ class App:
             case 0:
                 if pyxel.btnp(pyxel.KEY_SPACE):
                     App.gamestate = 1
-                    self.player0.place_set()
-                    self.player1.place_set()
+                    for player in self.players:
+                        player.place_set()
                 if pyxel.btnp(pyxel.KEY_T) :
-                    self.tutorial = not self.tutorial                # logique pour le maineenu
+                    self.tutorial = not self.tutorial                # logique pour le main menu
 
 
 
             case 1:
-                for i in self.player1.debuffs :
-                    match i[0]:
-                        case _ : print("non")
+                for player in self.players:
+                    for i in player.debuffs :
+                        match i[0]:
+                            case _ : print("non")
                 if self.arrived_game > 0 :
                     self.arrived_game-=1
                 else:
-                    #mouvement joueur 1
-                    if pyxel.btnp(self.player0.keys_dict[0]["key up"]):
-                        if self.player0.cursor.pos[1] > 0 :
-                            self.player0.cursor.pos[1] -=1
-                    if pyxel.btnp(self.player0.keys_dict[0]["key down"]):
-                        if self.player0.cursor.pos[1] < 7 :
-                            self.player0.cursor.pos[1] += 1
-                    if pyxel.btnp(self.player0.keys_dict[0]["key left"]):
-                        if self.player0.cursor.pos[0] > 0 :
-                            self.player0.cursor.pos[0] -= 1
-                    if pyxel.btnp(self.player0.keys_dict[0]["key right"]):
-                        if self.player0.cursor.pos[0] < 7 :
-                            self.player0.cursor.pos[0] += 1
-                    if pyxel.btnp(self.player0.keys_dict[0]["key shoot"]):
-                        if self.player0.cooldown == 0 :
-                            self.player0.cursor.shoot()
-                            self.player0.cursor.col = 13
-                    #mouvement joueur 1
-                    if pyxel.btnp(self.player1.keys_dict[1]["key up"]):
-                        if self.player1.cursor.pos[1] > 0 :
-                            self.player1.cursor.pos[1] -=1
-                    if pyxel.btnp(self.player1.keys_dict[1]["key down"]):
-                        if self.player1.cursor.pos[1] < 7 :
-                            self.player1.cursor.pos[1] += 1
-                    if pyxel.btnp(self.player1.keys_dict[1]["key left"]):
-                        if self.player1.cursor.pos[0] > 0 :
-                            self.player1.cursor.pos[0] -= 1
-                    if pyxel.btnp(self.player1.keys_dict[1]["key right"]):
-                        if self.player1.cursor.pos[0] < 7 :
-                            self.player1.cursor.pos[0] += 1
-                    if pyxel.btnp(self.player1.keys_dict[1]["key shoot"]):
-                        if self.player1.cooldown == 0:
-                            self.player1.cursor.shoot()
-                            self.player1.cursor.col = 13
-                            
-                    
+                    #mouvement joueurs
+                    for player in self.players:
+                        if pyxel.btnp(player.keys_dict[player.id]["key up"]):
+                            player.move_cursor(0,-1)
+                        if pyxel.btnp(player.keys_dict[player.id]["key down"]):
+                            player.move_cursor(0,1)
+                        if pyxel.btnp(player.keys_dict[player.id]["key left"]):
+                            player.move_cursor(-1,0)
+                        if pyxel.btnp(player.keys_dict[player.id]["key right"]):
+                            player.move_cursor(1,0)
+                        if pyxel.btnp(player.keys_dict[player.id]["key shoot"]):
+                            if player.cooldown <= 0 :
+                                player.shoot()
+                                player.update_cursors_color(13)
 
-                    if self.player0.cooldown > 0 :
-                        self.player0.cooldown -= 1
-                    else : self.player0.cursor.col = 3
-                    if self.player1.cooldown > 0 :
-                        self.player1.cooldown -= 1
-                    else : self.player1.cursor.col = 9
+                        if player.cooldown > 0 :
+                            player.cooldown -= 1
+                        else : player.update_cursors_color()
 
-                    if self.player0.hp_left == 0 :
-                        self.winner = "player 2"
-                        App.gamestate = 3
-                    if self.player1.hp_left == 0 :
-                        self.winner = "player 1"
-                        App.gamestate = 3
+                        if player.hp_left == 0 :
+                            self.winner = f"player {player.id+1}"
+                            App.gamestate = 3
                 
                 
             
@@ -116,34 +101,32 @@ class App:
                         self.shoplist.append(self.upgrades[random.randint(0,3)])
                 for i in range(len(self.shoplist)):
                     pyxel.text(50 + 40*i,50,self.shoplist[i][0] + " : " + str(self.shoplist[i][1]),7)  
-                 
-                if pyxel.btnp(pyxel.KEY_KP_1) :
-                    self.player0.hp += 1 
+                
+
                 #Cheats pour la démonstration
                 
                 if pyxel.btnp(pyxel.KEY_KP_1) :
-                    self.player0.hp -= 1 
+                    self.players[0].hp -= 1 
                 if pyxel.btnp(pyxel.KEY_KP_4) :
-                    self.player0.hp += 1  
+                    self.players[0].hp += 1  
 
                 if pyxel.btnp(pyxel.KEY_KP_3) :
-                    self.player1.hp -= 1 
+                    self.players[1].hp -= 1 
                 if pyxel.btnp(pyxel.KEY_KP_6) :
-                    self.player1.hp += 1  
+                    self.players[1].hp += 1  
 
                 if pyxel.btnp(pyxel.KEY_KP_7) :
-                    self.player0.frames_between_shoot = [self.player0.frames_between_shoot[0] -1, self.player0.frames_between_shoot[1] -1]
+                    self.players[0].frames_between_shoot = [self.player0.frames_between_shoot[0] -1, self.player0.frames_between_shoot[1] -1]
                 if pyxel.btnp(pyxel.KEY_KP_2) :
-                    self.player1.frames_between_shoot = [self.player1.frames_between_shoot[0] -1, self.player1.frames_between_shoot[1] -1]
+                    self.players[1].frames_between_shoot = [self.player1.frames_between_shoot[0] -1, self.player1.frames_between_shoot[1] -1]
 
 
                         
             case 3:
                 if pyxel.btnp(pyxel.KEY_SPACE):
-                    self.player0.hp_left = self.player0.hp
-                    self.player1.hp_left = self.player1.hp
-                    self.player0.place_set()
-                    self.player1.place_set()
+                    for player in self.players:
+                        player.hp_left = player.hp
+                        player.place_set()
                     self.arrived_game = 60
                     App.gamestate = 1
                 
@@ -186,25 +169,25 @@ class App:
                     pyxel.cls(13)
                     pyxel.rect(128,0,128,128,5)
                     pyxel.rect(0,128,128,128,14)
-                    
-                    self.grillep1.draw(3,11)
-                    self.grillep2.draw(4,9)
+
+                    for player in self.players:
+                        player.grid.draw()
 
                     #dessiner les curseurs
-                    self.player0.cursor.drawcursor()
-                    self.player1.cursor.drawcursor()
+                    for player in self.players:
+                        player.draw_cursors()
 
                     #--------UI joueur 1-----------
                     pyxel.rect(140,115,110,10,0)
-                    pyxel.rect(142,117, (106* self.player0.hp_left) / self.player0.hp ,6,3)
+                    pyxel.rect(142,117, (106* self.players[0].hp_left) / self.players[0].hp ,6,3)
 
-                    pyxel.text(147,101,str(self.player0.money),7)
+                    pyxel.text(147,101,str(self.players[0].money),7)
                     pyxel.blt(140,100,1,0,16,8,8,0)
                     #--------UI joueur 2-----------
                     pyxel.rect(5,133,110,10,0)
-                    pyxel.rect(7,135, (106* self.player1.hp_left) / self.player1.hp ,6,4)
+                    pyxel.rect(7,135, (106* self.players[1].hp_left) / self.players[1].hp ,6,4)
 
-                    pyxel.text(10,146,str(self.player1.money),7)
+                    pyxel.text(10,146,str(self.players[1].money),7)
                     pyxel.blt(3,145,1,0,16,8,8,0)
 
 
@@ -250,14 +233,15 @@ class Player:
     }
 
 
-    def __init__(self, id, grid : 'Grille', opponent = None):
+    def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, opponent = None):
         self.id = id
-        self.grid = grid
+        self.grid = Grille(self, grid_colors, grid_offset[0], grid_offset[1])
+        self.cursorColor = cursor_color
+
+        self.opponents : list[Player] = []
+        self.opponentsGrid : list[Grille] = []
+        self.opponentGridCusor : dict[Grille, Cursor] = {}
         
-        self.opponent = opponent
-        if opponent != None :
-            self.set_opponent(opponent)
-            self.opponentGrid = opponent.grid
         self.cooldown = 0
         self.hp = 9
         self.hp_left = 9
@@ -272,6 +256,16 @@ class Player:
         self.opponent = opponent
         self.opponentGrid = opponent.grid
         self.cursor = Cursor(self, self.opponentGrid)
+
+    def add_opponent(self, player : 'Player'):
+        self.opponents.append(player)
+        self.opponentsGrid.append(player.grid)
+        self.opponentGridCusor[player.grid] = Cursor(self, player.grid)
+
+    def remove_opponent(self, player : 'Player'):
+        self.opponents.remove(player)
+        self.opponentsGrid.remove(player.grid)
+        self.opponentGridCusor.pop(player.grid)
 
     def place_set(self):
         finalSet : list[DaddyBoat] = []
@@ -290,6 +284,25 @@ class Player:
                 finalSet.append(boat)
 
         self.grid.generate_boat(finalSet)
+
+    def move_cursor(self, x, y):
+        for cursor in self.opponentGridCusor.values():
+            x1, y1 = cursor.pos[0]+x, cursor.pos[1]+y
+            if self.grid.on_grid((x1,y1)):
+                cursor.pos = [x1,y1]
+
+    def shoot(self):
+        for cursor in self.opponentGridCusor.values():
+            cursor.shoot(self)
+
+    def update_cursors_color(self, color : int|None = None):
+        color = color if color else self.cursorColor
+        for cursor in self.opponentGridCusor.values():
+            cursor.col = color
+    
+    def draw_cursors(self):
+        for cursor in self.opponentGridCusor.values():
+            cursor.drawcursor()
 
 
 
@@ -390,43 +403,43 @@ class BoatLbr(DaddyBoat):
 
 
 class Cursor :
-    def __init__(self, player : Player, opponentGrid : 'Grille'):
-        self.pos = [0,0]
+    def __init__(self, player : Player, grid : 'Grille', position = [0,0]):
+        self.pos = position
         self.player = player
-        self.id = player.id
-        if self.id == 0 : 
-            self.offsetx = 128
-            self.offsety = 128
-            self.col = 3
-        else :
-            self.offsetx = 0
-            self.offsety = 0 
-            self.col = 9
-        self.opponentGrid = opponentGrid
+        self.grid = grid
+
+        self.offsetx = self.grid.offsetx
+        self.offsety = self.grid.offsety
+        self.col = self.player.cursorColor
     
     def drawcursor(self) :
         pyxel.rectb(self.offsetx + 16*self.pos[0], self.offsety + 16*self.pos[1],16,16,self.col)
         pyxel.rectb(self.offsetx-1 + 16*self.pos[0], self.offsety-1 + 16*self.pos[1],18,18,self.col)
 
-    def shoot(self) -> bool:
-        if self.opponentGrid.shoot_boat((self.pos[0], self.pos[1])):
-            self.player.cooldown = self.player.frames_between_shoot[0]
-            self.player.opponent.hp_left -= 1
-            self.player.money += 1
+    def shoot(self, attacker : Player|None = None) -> bool:
+        if self.grid.shoot_boat((self.pos[0], self.pos[1])):
+            self.grid.player.hp_left -= 1
+            if attacker:
+                attacker.cooldown = self.player.frames_between_shoot[0]
+                attacker.money += 1
         else:
-            self.player.cooldown = self.player.frames_between_shoot[1]
+            if attacker:
+                attacker.cooldown = self.player.frames_between_shoot[1]
     
 
 
 
 class Grille :
-    def __init__(self, offsetx : int = 0, offsety : int = 0):
+    def __init__(self, player : Player, colors : tuple[int,int], offsetx : int = 0, offsety : int = 0):
+        self.player = player
         self.width : int = 8
         self.height : int = 8
         self.tileSize = 16
         
         self.offsetx = offsetx
         self.offsety = offsety
+        self.col1 = colors[0]
+        self.col2 = colors[1]
 
         self.boats : list[DaddyBoat] = []
         self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : bateau a ces coordonnées}
@@ -445,15 +458,13 @@ class Grille :
             return self.coordinatesBoat[coord].get_shot(coord)
         return False
     
-    def draw(self,col1,col2):
-        col = col1
+    def draw(self):
         for i in range(8):
             for j in range(8):
-                pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,col)
-                if col == col1: col = col2
-                else : col = col1
-            if col == col1: col = col2
-            else : col = col1
+                if (i+j)%2:
+                    pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col1)
+                else:
+                    pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col2)
 
         for boat in self.boats:
             boat.draw()
