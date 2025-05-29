@@ -306,12 +306,12 @@ class Player:
 
 class DaddyBoat:
     #coordonnées relative au type du bateau
-    relativeCoordinates : dict[tuple[int,int], dict[str, int]] = {} #{coordonnées relatifs a ceux données lors de l'initialisation  : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}
+    relativeCoordinates : dict[tuple[int,int], dict[str, dict[str, int]]] = {} #{coordonnées relatifs a ceux données lors de l'initialisation  : {'alive' (et 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}
     
     def __init__(self, grid : "Grille", coord : tuple[int,int], *, is_fake : bool = False):
         self.grid = grid
         self.size = grid.tileSize
-        self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {} #{coordonnées : {'alive' (et 'dead'){kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}
+        self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, int]]] = {} #{coordonnées : alive? , {'alive' (et/ou 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}}
         for key, value in self.relativeCoordinates.items():
             self.coordinates[(coord[0]+key[0],coord[1]+key[1])] = {'alive' : True, 'is_trap' : False, 'textureKwargs' : value}
 
