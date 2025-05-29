@@ -40,8 +40,6 @@ class App:
             App.gamestate = 1
             for player in self.players:
                 player.place_set()
-            self.player0.place_set()
-            self.player1.place_set()
         elif pyxel.btnp(pyxel.KEY_O):
             App.gamestate = 2
         elif pyxel.btnp(pyxel.KEY_P):
