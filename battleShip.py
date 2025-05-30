@@ -331,6 +331,11 @@ class DaddyBoat:
             if all(boat['alive'] == False for boat in self.coordinates.values()):
                 self.alive = False
 
+            # renvoie le tire si la portion du bateau est un piege
+            if self.coordinates[coord]['is_trap']:
+                for grid in self.grid.player.opponentsGrid:
+                    grid.shoot_boat(coord)
+
             #verifie si le bateau est un faux
             if self.is_fake:
                 return False
