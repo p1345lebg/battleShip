@@ -18,6 +18,8 @@ class App:
         self.add_player(Player(self, 0, (0,0), (3,11), 3))
         self.add_player(Player(self, 1, (128,128), (4,9), 9))
         self.tutorial = False
+        self.shopgrid = Grille(width=4,height=2,rendertype=1)
+        
 
         pyxel.run(self.update,self.draw)
 
@@ -40,6 +42,8 @@ class App:
             App.gamestate = 1
             for player in self.players:
                 player.place_set()
+            self.arrived_shop = True
+            self.arrived_game = 60
         elif pyxel.btnp(pyxel.KEY_O):
             App.gamestate = 2
         elif pyxel.btnp(pyxel.KEY_P):
@@ -54,7 +58,8 @@ class App:
                     for player in self.players:
                         player.place_set()
                 if pyxel.btnp(pyxel.KEY_T) :
-                    self.tutorial = not self.tutorial                # logique pour le main menu
+                    self.tutorial = not self.tutorial                
+                    # logique pour le main menu
 
 
 
@@ -87,6 +92,8 @@ class App:
 
                         if player.hp_left == 0 :
                             self.winner = f"player {player.id+1}"
+                            player.opponents[0].roundpoint = True
+
                             App.gamestate = 3
                 
                 
@@ -95,10 +102,24 @@ class App:
                 if self.arrived_shop:
                     self.arrived_shop = False
                     self.shoplist = []
+                    self.players[0].menucursor = Cursor(self.players[0],self.shopgrid,position=[0,0])
+                    self.players[1].menucursor = Cursor(self.players[1],self.shopgrid,position=[0,0])
                     for i in range(4) :
                         self.shoplist.append(self.upgrades[random.randint(0,3)])
-                for i in range(len(self.shoplist)):
-                    pyxel.text(50 + 40*i,50,self.shoplist[i][0] + " : " + str(self.shoplist[i][1]),7)  
+                    print(self.shoplist)
+
+                for player in self.players:
+                        if pyxel.btnp(player.keys_dict[player.id]["key up"]):
+                            player.move_cursor(0,-1,"shop",self.shopgrid)
+                            print(player.menucursor.pos)
+                        if pyxel.btnp(player.keys_dict[player.id]["key down"]):
+                            player.move_cursor(0,1,"shop",self.shopgrid)
+                        if pyxel.btnp(player.keys_dict[player.id]["key left"]):
+                            player.move_cursor(-1,0,"shop",self.shopgrid)
+                        if pyxel.btnp(player.keys_dict[player.id]["key right"]):
+                            player.move_cursor(1,0,"shop",self.shopgrid)
+
+                
                 
 
                 #Cheats pour la démonstration
@@ -121,6 +142,7 @@ class App:
 
                         
             case 3:
+                
                 if pyxel.btnp(pyxel.KEY_SPACE):
                     for player in self.players:
                         player.hp_left = player.hp
@@ -173,7 +195,7 @@ class App:
 
                     #dessiner les curseurs
                     for player in self.players:
-                        player.draw_cursors()
+                        player.draw_cursors(1)
 
                     #--------UI joueur 1-----------
                     pyxel.rect(140,115,110,10,0)
@@ -198,14 +220,30 @@ class App:
                 pyxel.rect(20,70,210,150,5)
                 for i in range(4):
                     pyxel.rect(27 + 50*i,15,45,43,13)
+
                     pyxel.rect(27 + 50*i,80,45,130,13)
+                    match self.shoplist[i][0]:
+                        case "+1 HITPOINT":
+                            pyxel.text(28 + 50*i,81,"+1HP",7)
+                        case "+3 HITPOINTS":
+                            pyxel.text(28 + 50*i,81,"+3HP",7)
+                        case "-RELOADTIME":
+                            pyxel.text(28 + 50*i,81,"-RELOAD",7)
+                        case "+3 MONEY @ END":
+                            pyxel.text(28 + 50*i,81,"+3  @END",7)
+                            pyxel.blt(36 + 50*i,81,1,0,16,8,8,0)
+                
+                for player in self.players:
+                        player.menucursor.drawcursor(2)
 
-
+                    
 
             case 3:
                 pyxel.cls(1)
                 pyxel.text(110,128,self.winner + " wins",7)
-                pyxel.text(100,137,"press spacebar to start again",7)
+                pyxel.text(80,137,"press spacebar to start again",7)
+                pyxel.circ(70,100,20,0)
+                pyxel.circ(198,100,20,0)
 
 
 
@@ -233,13 +271,14 @@ class Player:
 
     def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, opponent = None):
         self.id = id
-        self.grid = Grille(self, grid_colors, grid_offset[0], grid_offset[1])
+        self.grid = Grille(self,8,8, grid_colors, grid_offset[0], grid_offset[1])
         self.cursorColor = cursor_color
+        self.roundpoint = False
 
         self.opponents : list[Player] = []
         self.opponentsGrid : list[Grille] = []
         self.opponentGridCusor : dict[Grille, Cursor] = {}
-        
+        self.menucursor : Cursor
         self.cooldown = 0
         self.hp = 9
         self.hp_left = 9
@@ -249,6 +288,8 @@ class Player:
         self.bonus_money =  0 # argent en + par round
         self.items = []
         self.debuffs = [] #[(debuff,frames_restantes)]
+
+
 
     def set_opponent(self, opponent : 'Player'):
         self.opponent = opponent
@@ -283,11 +324,18 @@ class Player:
 
         self.grid.generate_boat(finalSet)
 
-    def move_cursor(self, x, y):
-        for cursor in self.opponentGridCusor.values():
-            x1, y1 = cursor.pos[0]+x, cursor.pos[1]+y
-            if self.grid.on_grid((x1,y1)):
-                cursor.pos = [x1,y1]
+    def move_cursor(self, x, y,type = "game", shopgrid = None):
+        match type :
+            case "game":
+                for cursor in self.opponentGridCusor.values():
+                    x1, y1 = cursor.pos[0]+x, cursor.pos[1]+y
+                    if self.grid.on_grid((x1,y1)):
+                        cursor.pos = [x1,y1]
+            
+            case "shop":
+                x1, y1 = self.menucursor.pos[0]+x, self.menucursor.pos[1]+y
+                if shopgrid.on_grid((x1,y1)):
+                    self.menucursor.pos = [x1,y1]
 
     def shoot(self):
         for cursor in self.opponentGridCusor.values():
@@ -298,9 +346,12 @@ class Player:
         for cursor in self.opponentGridCusor.values():
             cursor.col = color
     
-    def draw_cursors(self):
+    def draw_cursors(self,gamestate):
         for cursor in self.opponentGridCusor.values():
-            cursor.drawcursor()
+            cursor.drawcursor(gamestate)
+
+    def enter_shop(self,shopgrid) :
+        self.cursor = Cursor(self,shopgrid)
 
 
 
@@ -437,9 +488,18 @@ class Cursor :
         self.offsety = self.grid.offsety
         self.col = self.player.cursorColor
     
-    def drawcursor(self) :
-        pyxel.rectb(self.offsetx + 16*self.pos[0], self.offsety + 16*self.pos[1],16,16,self.col)
-        pyxel.rectb(self.offsetx-1 + 16*self.pos[0], self.offsety-1 + 16*self.pos[1],18,18,self.col)
+    def drawcursor(self,gamestate) :
+        match gamestate:
+            case 1:
+                pyxel.rectb(self.offsetx + 16*self.pos[0], self.offsety + 16*self.pos[1],16,16,self.col)
+                pyxel.rectb(self.offsetx-1 + 16*self.pos[0], self.offsety-1 + 16*self.pos[1],18,18,self.col)
+            case 2:
+                
+                if self.pos[1] == 1:
+                    
+
+                    pyxel.rectb(27 + 50*self.pos[0],80,45,130,self.col)
+                else : pyxel.rectb(27 + 50*self.pos[0],15,45,43,self.col)
 
     def shoot(self, attacker : Player|None = None) -> bool:
         if self.grid.shoot_boat((self.pos[0], self.pos[1])):
@@ -455,25 +515,32 @@ class Cursor :
 
 
 class Grille :
-    def __init__(self, player : Player, colors : tuple[int,int], offsetx : int = 0, offsety : int = 0):
-        self.player = player
-        self.width : int = 8
-        self.height : int = 8
+    def __init__(self, player = None ,width : int = 0, height : int = 0, colors = [0,2], offsetx : int = 0, offsety : int = 0,rendertype : int = 0):
+        if player != None:
+            self.player = player
+        if width != 0:
+            self.width : int = width
+        if height != 0:
+            self.height : int = height
         self.tileSize = 16
         
         self.offsetx = offsetx
         self.offsety = offsety
-        self.col1 = colors[0]
-        self.col2 = colors[1]
+        if colors != None:
+            self.col1 = colors[0]
+            self.col2 = colors[1]
 
-        self.boats : list[DaddyBoat] = []
-        self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : bateau a ces coordonnées}
+        self.rendertype = rendertype #si le rendertype != 0 , la grille est invisible, le curseur render tout
+        if rendertype == 0:
+            self.boats : list[DaddyBoat] = []
+            self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : bateau a ces coordonnées}
 
         
         
     def on_grid(self, coord : tuple[int,int]):
         # verifie que les coordonnées soient bien sur la grille
         if 0 <= coord[0] < self.width and 0 <= coord[1] < self.height:
+            
             return True
         return False
     
@@ -484,16 +551,18 @@ class Grille :
         return False
     
     def draw(self):
-        for i in range(8):
-            for j in range(8):
-                if (i+j)%2:
-                    pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col1)
-                else:
-                    pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col2)
+        match self.rendertype:
+            case 0:
+                for i in range(8):
+                    for j in range(8):
+                        if (i+j)%2:
+                            pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col1)
+                        else:
+                            pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col2)
 
-        for boat in self.boats:
-            boat.draw()
-    
+                for boat in self.boats:
+                    boat.draw()            
+        
     def generate_boat(self, boats_list : list[DaddyBoat]):
         # reiniitalise la grille
         self.boats = []
