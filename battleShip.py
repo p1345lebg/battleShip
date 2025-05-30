@@ -91,7 +91,7 @@ class App:
                         else : player.update_cursors_color()
 
                         if player.hp_left == 0 :
-                            self.winner = f"player {player.id+1}"
+                            self.winner = player
                             player.opponents[0].roundpoint = True
 
                             App.gamestate = 3
@@ -239,8 +239,8 @@ class App:
                     
 
             case 3:
-                pyxel.cls(1)
-                pyxel.text(110,128,self.winner + " wins",7)
+                pyxel.cls(self.winner.cursorColor)
+                pyxel.text(110,128,str(self.winner) + " wins",7)
                 pyxel.text(80,137,"press spacebar to start again",7)
                 pyxel.circ(70,100,20,0)
                 pyxel.circ(198,100,20,0)
@@ -269,11 +269,15 @@ class Player:
     }
 
 
-    def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, opponent = None):
+    def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, name : str|None = None):
         self.id = id
         self.grid = Grille(self,8,8, grid_colors, grid_offset[0], grid_offset[1])
         self.cursorColor = cursor_color
         self.roundpoint = False
+
+        self.name : str = name
+        if not name:
+            self.name = f'player {self.id}'
 
         self.opponents : list[Player] = []
         self.opponentsGrid : list[Grille] = []
@@ -288,6 +292,9 @@ class Player:
         self.bonus_money =  0 # argent en + par round
         self.items = []
         self.debuffs = [] #[(debuff,frames_restantes)]
+
+    def __str__(self) -> str:
+        return self.name
 
 
 
@@ -352,6 +359,8 @@ class Player:
 
     def enter_shop(self,shopgrid) :
         self.cursor = Cursor(self,shopgrid)
+
+
 
 
 
