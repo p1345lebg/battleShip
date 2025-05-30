@@ -604,10 +604,8 @@ class Grille :
                         n = 3
                 stop -= 1
         for boat in self.boats:
-            print(boat)
             for coord in boat.coordinates:
                 self.coordinatesBoat[coord] = boat
-        print(50*'-')
     
     def add_fake_boat(self, boat : DaddyBoat):
         coords = []
