@@ -422,6 +422,12 @@ class DaddyBoat:
                         colkey=1,
                         **value['textureKwargs']['dead']
                     )
+
+    def __str__(self):
+        return f'{self.coordinates.keys()}'
+
+
+
 class Boat1(DaddyBoat):
     relativeCoordinates = {(0,0) : {'alive' : {'u' : 0, 'v' : 0, 'w' : 16, 'h' : 16},
                                     'dead' : {'u' : 0, 'v' : 16, 'w' : 16, 'h' : 16}}}
@@ -566,7 +572,9 @@ class Grille :
     def generate_boat(self, boats_list : list[DaddyBoat]):
         # reiniitalise la grille
         self.boats = []
+        self.coordinatesBoat = {}
         coords : list[tuple[int,int]] = []
+
         # parcours tout les bateaux qu'on souhaite placer
         for boat in boats_list:
             stop = 10
@@ -596,8 +604,10 @@ class Grille :
                         n = 3
                 stop -= 1
         for boat in self.boats:
+            print(boat)
             for coord in boat.coordinates:
                 self.coordinatesBoat[coord] = boat
+        print(50*'-')
     
     def add_fake_boat(self, boat : DaddyBoat):
         coords = []
