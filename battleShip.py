@@ -15,8 +15,8 @@ class App:
         self.arrived_shop = True
         self.arrived_game = 60
         self.players : list[Player] = []
-        self.add_player(Player(self, 0, (0,0), (3,11), 3))
-        self.add_player(Player(self, 1, (128,128), (4,9), 9))
+        self.add_player(Player(self, 0, (0,0), (3,11), 3, name="player 1"))
+        self.add_player(Player(self, 1, (128,128), (4,9), 9, name="player 2"))
         self.tutorial = False
         self.shopgrid = Grille(width=4,height=2,rendertype=1)
         
@@ -159,14 +159,25 @@ class App:
                 #graphismes pour le main menu
                 if self.tutorial :
                     pyxel.cls(1)
-                    pyxel.text(50,26,"ceci est un jeu de bataille navale différent",7)
-                    pyxel.text(20,32,"chaque joueur doit éliminer les bateau de l'autre",7)
+                    pyxel.text(50,26,"ceci est un jeu de bataille navale different",7)
+                    pyxel.text(20,32,"chaque joueur doit eliminer les bateau de l'autre",7)
                     pyxel.text(20,38,"le plus rapidement possible",7)
-                    pyxel.text(20,44,"joueur 1 :  curseur bleu ; joueur 2 : curseur rouge",7)
-                    pyxel.text(20,50,"mouvement : ",7)
-                    pyxel.text(20,56,"joueur 1 : les fleches ;  joueur 2 : ZQSD ",7)
-                    pyxel.text(20,62, "TIR :",7)
-                    pyxel.text(20,68,"joueur 1 :  \" m \"  ; joueur 2 : \" v \" ",7)
+                    pyxel.text(20,44, "controles :", 7)
+                    for i in range(len(self.players)):
+                        x = 20
+                        y = 50+80*i
+                        color = self.players[i].cursorColor
+                        pyxel.rectb(x,y,220,60,color)
+                        pyxel.text(x+4, y+4, str(self.players[i]), color)
+
+                        pyxel.text(x+4, y+12, 'bouger :', color)
+                        pyxel.blt(x+24, y+20, img=2,**self.players[i].keys_texture_dict[i]['key up'])
+                        pyxel.blt(x+4, y+40, img=2,**self.players[i].keys_texture_dict[i]['key left'])
+                        pyxel.blt(x+24, y+40, img=2,**self.players[i].keys_texture_dict[i]['key down'])
+                        pyxel.blt(x+44, y+40, img=2,**self.players[i].keys_texture_dict[i]['key right'])
+
+                        pyxel.text(x+84, y+12, 'tirer :', color)
+                        pyxel.blt(x+84, y+20, img=2,**self.players[i].keys_texture_dict[i]['key shoot'])
                 else :
                     pyxel.cls(1)
                     pyxel.text(110,70,"Mashbattleship",7)
@@ -267,10 +278,26 @@ class Player:
             "key shoot" : pyxel.KEY_V
         }
     }
+    keys_texture_dict : dict[int,dict[str, dict[str, int]]] = {
+        0 : {
+            "key up" : {'u' : 0, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key down" : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key left" : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key right" : {'u' : 48, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key shoot" : {'u' : 64, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0}
+        },
+        1 : {
+            "key up" : {'u' : 0, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key down" : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key left" : {'u' : 32, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key right" : {'u' : 48, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            "key shoot" : {'u' : 64, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0}
+        }
+    }
 
 
     def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, name : str|None = None):
-        self.id = id
+        self.id = id if (id in Player.keys_dict) and (id in Player.keys_texture_dict) else 0
         self.grid = Grille(self,8,8, grid_colors, grid_offset[0], grid_offset[1])
         self.cursorColor = cursor_color
         self.roundpoint = False
@@ -278,6 +305,7 @@ class Player:
         self.name : str = name
         if not name:
             self.name = f'player {self.id}'
+
 
         self.opponents : list[Player] = []
         self.opponentsGrid : list[Grille] = []
