@@ -181,9 +181,13 @@ class App:
                         pyxel.blt(x+84, y+20, img=2,**player.keys_texture_dict[player.id]['key shoot'])
                 else :
                     pyxel.cls(1)
-                    pyxel.text(110,70,"Mashbattleship",7)
-                    pyxel.text(100,135,"press spacebar to start",7)
-                    pyxel.text(100,140,"press t for tutorial",7)
+                    pyxel.text(100,70,"Mashbattleship",7)
+                    pyxel.text(118,135,"press",7)
+                    pyxel.blt(104,150, 2, 0, 32, 48, 16, 0)
+                    pyxel.text(112, 170, 'to start', 7)
+
+                    pyxel.text(128-44,200,"press  t  for tutorial",7)
+                    pyxel.blt(128-44+22, 195, 2, 48, 32, 16, 16, 0, scale=0.8)
 
 
 
