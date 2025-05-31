@@ -162,22 +162,23 @@ class App:
                     pyxel.text(50,26,"ceci est un jeu de bataille navale different",7)
                     pyxel.text(20,32,"chaque joueur doit eliminer les bateau de l'autre",7)
                     pyxel.text(20,38,"le plus rapidement possible",7)
-                    pyxel.text(20,44, "controles :", 7)
+                    pyxel.text(20,52, "controles :", 7)
                     for i in range(len(self.players)):
                         x = 20
-                        y = 50+80*i
-                        color = self.players[i].cursorColor
+                        y = 60+68*i
+                        player = self.players[i]
+                        color = player.cursorColor
                         pyxel.rectb(x,y,220,60,color)
-                        pyxel.text(x+4, y+4, str(self.players[i]), color)
+                        pyxel.text(x+4, y+4, str(player), color)
 
                         pyxel.text(x+4, y+12, 'bouger :', color)
-                        pyxel.blt(x+24, y+20, img=2,**self.players[i].keys_texture_dict[i]['key up'])
-                        pyxel.blt(x+4, y+40, img=2,**self.players[i].keys_texture_dict[i]['key left'])
-                        pyxel.blt(x+24, y+40, img=2,**self.players[i].keys_texture_dict[i]['key down'])
-                        pyxel.blt(x+44, y+40, img=2,**self.players[i].keys_texture_dict[i]['key right'])
+                        pyxel.blt(x+24, y+20, img=2,**player.keys_texture_dict[player.id]['key up'])
+                        pyxel.blt(x+4, y+40, img=2,**player.keys_texture_dict[player.id]['key left'])
+                        pyxel.blt(x+24, y+40, img=2,**player.keys_texture_dict[player.id]['key down'])
+                        pyxel.blt(x+44, y+40, img=2,**player.keys_texture_dict[player.id]['key right'])
 
                         pyxel.text(x+84, y+12, 'tirer :', color)
-                        pyxel.blt(x+84, y+20, img=2,**self.players[i].keys_texture_dict[i]['key shoot'])
+                        pyxel.blt(x+84, y+20, img=2,**player.keys_texture_dict[player.id]['key shoot'])
                 else :
                     pyxel.cls(1)
                     pyxel.text(110,70,"Mashbattleship",7)
@@ -323,6 +324,9 @@ class Player:
 
     def __str__(self) -> str:
         return self.name
+    
+    def change_name(self, name) -> None:
+        self.name = name
 
 
 
