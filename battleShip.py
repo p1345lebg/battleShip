@@ -10,13 +10,14 @@ class App:
         pyxel.load('assets/battleShip.pyxres')
 
         self.upgrades = [("+1 HITPOINT",15),("+3 HITPOINTS",40),("-RELOADTIME",17),("+3 MONEY @ END", 9)]
-        self.winner = "player 1"
+        self.winner : Player|None = None
         self.shoplist = []
         self.arrived_shop = True
         self.arrived_game = 60
         self.players : list[Player] = []
         self.add_player(Player(self, 0, (0,0), (3,11), 3, name="player 1"))
         self.add_player(Player(self, 1, (128,128), (4,9), 9, name="player 2"))
+        self.playersAlive : list[Player] = [player for player in self.players]
         self.tutorial = False
         self.shopgrid = Grille(width=4,height=2,rendertype=1)
         
@@ -55,6 +56,7 @@ class App:
             case 0:
                 if pyxel.btnp(pyxel.KEY_SPACE):
                     App.gamestate = 1
+                    self.playersAlive = [player for player in self.players]
                     for player in self.players:
                         player.place_set()
                 if pyxel.btnp(pyxel.KEY_T) :
@@ -91,10 +93,15 @@ class App:
                         else : player.update_cursors_color()
 
                         if player.hp_left == 0 :
-                            self.winner = player
-                            player.opponents[0].roundpoint = True
-
-                            App.gamestate = 3
+                            if player in self.playersAlive:
+                                self.playersAlive.remove(player)
+                match len(self.playersAlive):
+                    case 1:
+                        self.playersAlive[0].roundpoint = True
+                        self.winner = self.playersAlive[0]
+                        App.gamestate = 3
+                    case 0:
+                        self.winner = None
                 
                 
             
@@ -144,6 +151,7 @@ class App:
             case 3:
                 
                 if pyxel.btnp(pyxel.KEY_SPACE):
+                    self.playersAlive = [player for player in self.players]
                     for player in self.players:
                         player.hp_left = player.hp
                         player.place_set()
@@ -255,11 +263,17 @@ class App:
                     
 
             case 3:
-                pyxel.cls(self.winner.cursorColor)
-                pyxel.text(110,128,str(self.winner) + " wins",7)
-                pyxel.text(80,137,"press spacebar to start again",7)
+                if self.winner:
+                    pyxel.cls(self.winner.cursorColor)
+                    text = f'{str(self.winner)} wins"'
+                    pyxel.text(128-(len(text)*pyxel.FONT_WIDTH)/2,128,text,7)
+                else:
+                    pyxel.cls(13)
+                    pyxel.text(122,128,'tie',7)
+
+                pyxel.text(70,137,"press spacebar to start again",7)
                 pyxel.circ(70,100,20,0)
-                pyxel.circ(198,100,20,0)
+                pyxel.circ(186,100,20,0)
 
 
 
