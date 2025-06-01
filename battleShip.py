@@ -586,6 +586,8 @@ class Grille :
             self.boats : list[DaddyBoat] = []
             self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : bateau a ces coordonnées}
 
+        self.explosions : list[Explosion] = []
+
         
         
     def on_grid(self, coord : tuple[int,int]):
@@ -598,7 +600,10 @@ class Grille :
     def shoot_boat(self, coord : tuple[int,int]) -> bool:
         # retour demande au bateau si il a été touché si il est sur cette case sinon retourne False
         if coord in self.coordinatesBoat:
+            self.explosions.append(Explosion(self, (self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize), False))
             return self.coordinatesBoat[coord].get_shot(coord)
+        
+        self.explosions.append(Explosion(self, (self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize)))
         return False
     
     def draw(self):
@@ -612,7 +617,10 @@ class Grille :
                             pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col2)
 
                 for boat in self.boats:
-                    boat.draw()            
+                    boat.draw()
+                for explosion in self.explosions:
+                    explosion.draw()
+                
         
     def generate_boat(self, boats_list : list[DaddyBoat]):
         # reiniitalise la grille
@@ -678,6 +686,45 @@ class Grille :
         for coordinates, boat in boats:
             boat : DaddyBoat
             boat.coordinates[coordinates]['is_trap'] = True
+
+
+class Explosion:
+    textures : dict[int, dict[str|int, int|list[int]|dict[str, int]]] = {
+        0: {'order' : [0, 1, 2, 3, 4],
+            'delay' : 30,
+            0 : {'u' : 0, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            1 : {'u' : 16, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            2 : {'u' : 32, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            3 : {'u' : 48, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            4 : {'u' : 64, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0}},
+        1: {'order' : [0, 1, 2],
+            'delay' : 30,
+            0 : {'u' : 0, 'v' : 48, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            1 : {'u' : 16, 'v' : 48, 'w' : 16, 'h' : 16, 'colkey' : 0},
+            2 : {'u' : 32, 'v' : 48, 'w' : 16, 'h' : 16, 'colkey' : 0}}
+    }
+    def __init__(self, class_localisation, coordinates : tuple[int,int], in_water : bool = True):
+        """doit etre placé dans une variable 'self.explosions'"""
+        self.dad = class_localisation
+        self.coordinates : tuple[int,int] = coordinates
+        self.texture : dict[str|int, int|dict[str, int]] = self.textures[0] if in_water else self.textures[1]
+        self.frameIndex : int = 0
+        self.lastFrame : int = len(self.texture['order'])
+        self.timeCounter = 0
+
+    def draw(self):
+        if self.texture['order'][self.frameIndex] in self.texture:
+            pyxel.blt(*self.coordinates, **self.texture[self.texture['order'][self.frameIndex]], img=0)
+        else:
+            pyxel.rect(*self.coordinates, w=16, h=16, col=7)
+
+        self.timeCounter += 1
+        if self.timeCounter >= self.texture['delay']:
+            self.timeCounter = 0
+            self.frameIndex +=1
+        if self.frameIndex >= self.lastFrame:
+            self.dad.explosions.remove(self)
+        
             
 #--------------------------------
 #----------FUNC LOGIC------------
