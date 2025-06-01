@@ -96,11 +96,11 @@ class App:
                             if player in self.playersAlive:
                                 self.playersAlive.remove(player)
                 match len(self.playersAlive):
-                    case 1:
+                    case 1: # victoire d'un des deux joueur
                         self.playersAlive[0].roundpoint = True
                         self.winner = self.playersAlive[0]
                         App.gamestate = 3
-                    case 0:
+                    case 0: # égalié
                         self.winner = None
                         App.gamestate = 3
                 
@@ -143,9 +143,9 @@ class App:
                     self.players[1].hp += 1  
 
                 if pyxel.btnp(pyxel.KEY_KP_7) :
-                    self.players[0].frames_between_shoot = [self.player0.frames_between_shoot[0] -1, self.player0.frames_between_shoot[1] -1]
+                    self.players[0].frames_between_shoot = [self.players[0].frames_between_shoot[0] -1, self.players[0].frames_between_shoot[1] -1]
                 if pyxel.btnp(pyxel.KEY_KP_2) :
-                    self.players[1].frames_between_shoot = [self.player1.frames_between_shoot[0] -1, self.player1.frames_between_shoot[1] -1]
+                    self.players[1].frames_between_shoot = [self.players[1].frames_between_shoot[0] -1, self.players[1].frames_between_shoot[1] -1]
 
 
                         
