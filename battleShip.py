@@ -102,6 +102,7 @@ class App:
                         App.gamestate = 3
                     case 0:
                         self.winner = None
+                        App.gamestate = 3
                 
                 
             
