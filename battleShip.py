@@ -639,6 +639,7 @@ class Grille :
         
     def generate_boat(self, boats_list : list[DaddyBoat]):
         # reiniitalise la grille
+        self.explosions.clear()
         self.boats = []
         self.coordinatesBoat = {}
         coords : list[tuple[int,int]] = []
