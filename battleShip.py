@@ -414,21 +414,29 @@ class Player:
 
 class SpriteGroup:
     def __init__(self, *sprite : 'Sprite') -> None:
-        self.sprites = list[sprite] = [*sprite]
+        self.sprites : list[Sprite] = [*sprite]
+        for sprites in self.sprites:
+            sprites.set_group(self)
 
-    def add_sprite(self, sprite : 'Sprite') -> None:
-        self.sprites += [*sprite]
+    def add_sprite(self, *sprites : 'Sprite') -> None:
+        for sprite in sprites:
+            sprite.set_group(self)
+            self.sprites.append(sprite)
 
-    def remove_sprite(self, sprite : 'Sprite') -> None:
-        if sprite in self.sprites:
-            self.sprites.remove(sprite)
+    def remove_sprite(self, *sprites : 'Sprite') -> None:
+        for sprite in sprites:
+            if sprite in self.sprites:
+                self.sprites.remove(sprite)
+
+    def clear(self):
+        self.sprites.clear()
+
+    def get_sprites(self) -> list['Sprite']:
+        return self.sprites
 
 class Sprite: # classe qui gere les images (en prevision de futures ajouts)
-    def __init__(self, group : SpriteGroup | None, img : int|pyxel.Image, u : float, v : float, w : float, h : float, colkey : int|None = None, *, offset : tuple[int,int]|None = None, scale : float|None = None, rotate : float|None = None):
-        self.group = group
-        if self.group:
-            self.group.add_sprite(self)
-
+    group : SpriteGroup|None = None
+    def __init__(self, img : int|pyxel.Image, u : float, v : float, w : float, h : float, colkey : int|None = None, *, offset : tuple[int,int]|None = None, scale : float|None = None, rotate : float|None = None):
         self.img = img
         self.u = u
         self.v = v
@@ -440,9 +448,17 @@ class Sprite: # classe qui gere les images (en prevision de futures ajouts)
         self.scale = scale
 
     def kill(self) -> None:
-        self.group.remove_sprite(self)
+        if self.group:
+            self.group.remove_sprite(self)
+
+    def in_group(self):
+        if self.group:
+            return True
+        return False
 
     def set_group(self, group : 'SpriteGroup') -> None:
+        if group == self.group:
+            return
         if self.group:
             self.group.remove_sprite(self)
         self.group = group
@@ -450,24 +466,21 @@ class Sprite: # classe qui gere les images (en prevision de futures ajouts)
             self.group.add_sprite(self)
 
     def draw(self, x, y, *, scale : float|None = None, rotate : float|None = None) -> None:
-        #if self.scale: scale = scale*self.scale if scale else self.scale
+        if self.scale: scale = scale*self.scale if scale else self.scale
         if self.rotate: rotate = rotate+self.rotate if rotate else self.rotate
         pyxel.blt(x+self.offsetx, y+self.offsety, self.img, self.u, self.v, self.w, self.h, self.colkey, rotate=rotate, scale=scale)
 
 class SpriteAnimated(Sprite):
-    def __init__(self, group : 'SpriteGroup', delay, *sprite : Sprite, loop : bool = False):
-        self.group = group
-        if self.group:
-            self.group.add_sprite(self)
-
+    def __init__(self, delay, *sprite : Sprite, loop : bool = False):
         self.delay = delay
         self.sprites = sprite
 
         self.loop = loop
         self.delay = delay+1
         self.frameCount = 0
-        self.maxIndex = len(self.sprites-1)
+        self.maxIndex = len(self.sprites)-1
         self.index = 0
+        self.finished = False
 
 
     def draw(self, x, y, *, scale = None, rotate = None):
@@ -477,10 +490,14 @@ class SpriteAnimated(Sprite):
             self.index += 1
         if self.index > self.maxIndex:
             if not self.loop:
+                self.finished = True
                 self.kill()
                 return
             self.index = 0
         self.sprites[self.index].draw(x, y, scale=scale, rotate=rotate)
+    
+    def copy(self) -> 'SpriteAnimated':
+        return SpriteAnimated(self.delay, *self.sprites, loop=self.loop)
 
 
 
@@ -550,20 +567,20 @@ class DaddyBoat:
 class Boat1(DaddyBoat):
     name = "Boat1"
     relativeCoordinates = {
-        (0,0) :{'alive' : Sprite(None, 0, 0, 0, 16, 16, colkey=0), 
-                'dead' : Sprite(None, 0, 0, 16, 16, 16, colkey=1)}
+        (0,0) :{'alive' : Sprite(0, 0, 0, 16, 16, colkey=0), 
+                'dead' : Sprite(0, 0, 16, 16, 16, colkey=1)}
     }
 
 class Boat2x(DaddyBoat):
     name = "Boat2x"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1)
         },
         (1, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=180)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
         }
     }
 
@@ -571,12 +588,12 @@ class Boat2y(DaddyBoat):
     name = "Boat2y"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
         },
         (0, 1): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
         }
     }
 
@@ -584,16 +601,16 @@ class Boat3x(DaddyBoat):
     name = "Boat3x"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1)
         },
         (1, 0): {
-            "alive": Sprite(None, 0, 32, 0, 16, 16, colkey=0),
-            "dead": Sprite(None, 0, 32, 16, 16, 16, colkey=1)
+            "alive": Sprite(0, 32, 0, 16, 16, colkey=0),
+            "dead": Sprite(0, 32, 16, 16, 16, colkey=1)
         },
         (2, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=180)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
         }
     }
 
@@ -601,16 +618,16 @@ class Boat3y(DaddyBoat):
     name = "Boat3y"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
         },
         (0, 1): {
-            "alive": Sprite(None, 0, 32, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(None, 0, 32, 16, 16, 16, colkey=1, rotate=90)
+            "alive": Sprite(0, 32, 0, 16, 16, colkey=0, rotate=90),
+            "dead": Sprite(0, 32, 16, 16, 16, colkey=1, rotate=90)
         },
         (0, 2): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
         }
     }
 
@@ -618,16 +635,16 @@ class BoatLtl(DaddyBoat):
     name = "BoatLtl"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 48, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(None, 0, 48, 16, 16, 16, colkey=1, rotate=-90)
+            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=-90),
+            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=-90)
         },
         (1, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=180)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
         },
         (0, 1): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
         }
     }
 
@@ -635,16 +652,16 @@ class BoatLtr(DaddyBoat):
     name = "BoatLtr"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 48, 0, 16, 16, colkey=0, rotate=0),
-            "dead": Sprite(None, 0, 48, 16, 16, 16, colkey=1, rotate=0)
+            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=0),
+            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=0)
         },
         (-1, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=0),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=0)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=0),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
         },
         (0, 1): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
         }
     }
 
@@ -652,16 +669,16 @@ class BoatLbl(DaddyBoat):
     name = "BoatLbl"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 48, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(None, 0, 48, 16, 16, 16, colkey=1, rotate=180)
+            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
+            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
         },
         (1, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=180)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
         },
         (0, -1): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
         }
     }
 
@@ -669,16 +686,16 @@ class BoatLbr(DaddyBoat):
     name = "BoatLbr"
     relativeCoordinates = {
         (0, 0): {
-            "alive": Sprite(None, 0, 48, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(None, 0, 48, 16, 16, 16, colkey=1, rotate=180)
+            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
+            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
         },
         (-1, 0): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=0),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=0)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=0),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
         },
         (0, -1): {
-            "alive": Sprite(None, 0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(None, 0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
         }
     }
 
@@ -742,7 +759,7 @@ class Grille :
             self.boats : list[DaddyBoat] = []
             self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : bateau a ces coordonnées}
 
-        self.explosions : list[Explosion] = []
+        self.explosions : SpriteGroup = SpriteGroup()
 
         
         
@@ -756,10 +773,12 @@ class Grille :
     def shoot_boat(self, coord : tuple[int,int]) -> bool:
         # retour demande au bateau si il a été touché si il est sur cette case sinon retourne False
         if coord in self.coordinatesBoat:
-            self.explosions.append(Explosion(self, (self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize), False))
+            self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize), False))
+            print(self.explosions.get_sprites())
             return self.coordinatesBoat[coord].get_shot(coord)
         
-        self.explosions.append(Explosion(self, (self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize)))
+        self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize)))
+        print(self.explosions.get_sprites())
         return False
     
     def draw(self):
@@ -774,7 +793,7 @@ class Grille :
 
                 for boat in self.boats:
                     boat.draw()
-                for explosion in self.explosions:
+                for explosion in self.explosions.get_sprites():
                     explosion.draw()
                 
         
@@ -845,44 +864,33 @@ class Grille :
             boat.coordinates[coordinates]['is_trap'] = True
 
 
-class Explosion:
-    textures : dict[int, dict[str|int, int|list[int]|dict[str, int]]] = {
-        0: {'order' : [0, 1, 2, 3, 4],
-            'delay' : 30,
-            0 : {'u' : 0, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            1 : {'u' : 16, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            2 : {'u' : 32, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            3 : {'u' : 48, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            4 : {'u' : 64, 'v' : 32, 'w' : 16, 'h' : 16, 'colkey' : 0}},
-        1: {'order' : [0, 1, 2],
-            'delay' : 30,
-            0 : {'u' : 0, 'v' : 48, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            1 : {'u' : 16, 'v' : 48, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            2 : {'u' : 32, 'v' : 48, 'w' : 16, 'h' : 16, 'colkey' : 0}}
+class Explosion(Sprite):
+    textures : dict[bool, SpriteAnimated] = {
+        True : SpriteAnimated(
+            20,
+            Sprite(0, 0, 32, 16, 16, colkey=0),
+            Sprite(0, 16, 32, 16, 16, colkey=0),
+            Sprite(0, 32, 32, 16, 16, colkey=0),
+            Sprite(0, 48, 32, 16, 16, colkey=0),
+            Sprite(0, 64, 32, 16, 16, colkey=0)
+        ),
+        False : SpriteAnimated(
+            20,
+            Sprite(0, 0, 48, 16, 16, colkey=0),
+            Sprite(0, 16, 48, 16, 16, colkey=0),
+            Sprite(0, 32, 48, 16, 16, colkey=0)
+        )
     }
-    def __init__(self, class_localisation, coordinates : tuple[int,int], in_water : bool = True):
+    def __init__(self, coordinates : tuple[int,int], in_water : bool = True):
         """doit etre placé dans une variable 'self.explosions'"""
-        self.dad = class_localisation
+        self.in_water = in_water
         self.coordinates : tuple[int,int] = coordinates
-        self.texture : dict[str|int, int|dict[str, int]] = self.textures[0] if in_water else self.textures[1]
-        self.frameIndex : int = 0
-        self.lastFrame : int = len(self.texture['order'])
-        self.timeCounter = 0
+        self.animation = self.textures[self.in_water].copy()
 
     def draw(self):
-        if self.texture['order'][self.frameIndex] in self.texture:
-            pyxel.blt(*self.coordinates, **self.texture[self.texture['order'][self.frameIndex]], img=0)
-        else:
-            pyxel.rect(*self.coordinates, w=16, h=16, col=7)
-
-        self.timeCounter += 1
-        if self.timeCounter >= self.texture['delay']:
-            self.timeCounter = 0
-            self.frameIndex +=1
-        if self.frameIndex >= self.lastFrame:
-            self.dad.explosions.remove(self)
-        
-            
+        self.animation.draw(*self.coordinates)
+        if self.animation.finished:
+            self.kill()
 
 
 
