@@ -276,7 +276,7 @@ class App:
             case 3:
                 if self.winner:
                     pyxel.cls(self.winner.cursorColor)
-                    text = f'{str(self.winner)} wins"'
+                    text = f'{str(self.winner)} wins'
                     pyxel.text(128-(len(text)*pyxel.FONT_WIDTH)/2,128,text,7)
                 else:
                     pyxel.cls(13)
