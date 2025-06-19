@@ -2,6 +2,8 @@
 import pyxel
 import random
 import os
+import json
+import ast
 
 class App:
     gamestate : int = 0 # 0 = main menu ; 1 = principal ; 2 = shop ; 3 = FIN
@@ -619,6 +621,7 @@ class RessourcePack:
         pyxel.KEY_V : Sprite(2, 64,16,16,16,colkey=0)
     }
     def __init__(self):
+        """n'est valide qe pour les bateaux pour l'instant"""
         pyxel.load('assets/battleShip.pyxres')
     
     def get_available_ressourcepack(self) -> list[str]:
@@ -631,19 +634,34 @@ class RessourcePack:
         if ressourcepack_name == 'default':
             pyxel.load('assets/battleShip.pyxres')
             self.boats = App.ressourcePack.boats
+            return
+        
+        pyxel.load(f'assets/{ressourcepack_name}/ressources.pyxres')
+        with open(os.sep.join(['assets',ressourcepack_name,'ressources.json'])) as file:
+            file : dict[str, dict[str, int|str|dict[str, dict[str, dict[str, int]]]]]= json.load(file)
+
+        self.boats = {}
+        if 'boats' in file:
+            for key, value in file['boats'].items():
+                self.boats[key] = {}
+                for coord, state in value.items():
+                    coord = ast.literal_eval(coord)
+                    self.boats[key][coord] = {}
+                    for name, texture in state.items():
+                        self.boats[key][coord][name] = Sprite(**texture) if any(kwarg in texture for kwarg in ['img', 'u', 'v', 'w', 'h']) else None
+
 
 
 class DaddyBoat:
     name : str = "DaddyBoat" #nom du bateau (utile pour les textures)
-    #coordonnées relative au type du bateau
-    relativeCoordinates : list[tuple[int,int]] = {} #{coordonnées relatifs a ceux données lors de l'initialisation  : {'alive' (et 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}
+    relativeCoordinates : list[tuple[int,int]] = [] # liste des coordonnées relative du batteau
     
     def __init__(self, grid : "Grille", coord : tuple[int,int], *, is_fake : bool = False):
         self.grid = grid
         self.size = grid.tileSize
         self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, Sprite]]] = {} #{coordonnées : alive? , {'alive' (et/ou 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}}
         for x,y in self.relativeCoordinates:
-            self.coordinates[(coord[0]+x,coord[1]+y)] = {'alive' : True, 'is_trap' : False, 'sprites' : App.ressourcePack.boats[self.name][(x,y)] if self.name in App.ressourcePack.boats else {}}
+            self.coordinates[(coord[0]+x,coord[1]+y)] = {'alive' : True, 'is_trap' : False, 'sprites' : App.ressourcePack.boats[self.name][(x,y)] if (self.name in App.ressourcePack.boats and (x,y) in App.ressourcePack.boats[self.name]) else {}}
 
         self.alive : bool = True if self.coordinates else False
 
@@ -697,138 +715,71 @@ class DaddyBoat:
 
 class Boat1(DaddyBoat):
     name = "boat1"
-    relativeCoordinates = {
-        (0,0) :{'alive' : Sprite(0, 0, 0, 16, 16, colkey=0), 
-                'dead' : Sprite(0, 0, 16, 16, 16, colkey=1)}
-    }
+    relativeCoordinates = [
+        (0,0)
+    ]
 
 class Boat2x(DaddyBoat):
     name = "boat2x"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1)
-        },
-        (1, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (1, 0)
+    ]
 
 class Boat2y(DaddyBoat):
     name = "boat2y"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
-        },
-        (0, 1): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (0, 1)
+    ]
 
 class Boat3x(DaddyBoat):
     name = "boat3x"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1)
-        },
-        (1, 0): {
-            "alive": Sprite(0, 32, 0, 16, 16, colkey=0),
-            "dead": Sprite(0, 32, 16, 16, 16, colkey=1)
-        },
-        (2, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (1, 0),
+        (2, 0)
+    ]
 
 class Boat3y(DaddyBoat):
     name = "boat3y"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
-        },
-        (0, 1): {
-            "alive": Sprite(0, 32, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(0, 32, 16, 16, 16, colkey=1, rotate=90)
-        },
-        (0, 2): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (0, 1),
+        (0, 2)
+    ]
 
 class BoatLtl(DaddyBoat):
     name = "boatLtl"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=-90)
-        },
-        (1, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
-        },
-        (0, 1): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (1, 0),
+        (0, 1)
+    ]
 
 class BoatLtr(DaddyBoat):
     name = "boatLtr"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=0),
-            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=0)
-        },
-        (-1, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=0),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
-        },
-        (0, 1): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (-1, 0),
+        (0, 1)
+    ]
 
 class BoatLbl(DaddyBoat):
     name = "boatLbl"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
-        },
-        (1, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
-        },
-        (0, -1): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (1, 0),
+        (0, -1)
+    ]
 
 class BoatLbr(DaddyBoat):
     name = "boatLbr"
-    relativeCoordinates = {
-        (0, 0): {
-            "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
-            "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
-        },
-        (-1, 0): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=0),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
-        },
-        (0, -1): {
-            "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
-            "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
-        }
-    }
+    relativeCoordinates = [
+        (0, 0),
+        (-1, 0),
+        (0, -1)
+    ]
 
 
 
