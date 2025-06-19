@@ -1,13 +1,16 @@
 #jeu de le nuit du code
 import pyxel
 import random
+import os
 
 class App:
     gamestate : int = 0 # 0 = main menu ; 1 = principal ; 2 = shop ; 3 = FIN
+    ressourcePack = None
     
     def __init__(self):
         pyxel.init(256,256,title="Nuit du code", fps=60)
-        pyxel.load('assets/battleShip.pyxres')
+        App.ressourcePack = RessourcePack()
+        self.ressourcePack = App.ressourcePack
 
         self.upgrades = [("+1 HITPOINT",15),("+3 HITPOINTS",40),("-RELOADTIME",17),("+3 MONEY @ END", 9)]
         self.winner : Player|None = None
@@ -181,13 +184,18 @@ class App:
                         pyxel.text(x+4, y+4, str(player), color)
 
                         pyxel.text(x+4, y+12, 'bouger :', color)
-                        pyxel.blt(x+24, y+20, img=2,**player.keys_texture_dict[player.id]['key up'])
-                        pyxel.blt(x+4, y+40, img=2,**player.keys_texture_dict[player.id]['key left'])
-                        pyxel.blt(x+24, y+40, img=2,**player.keys_texture_dict[player.id]['key down'])
-                        pyxel.blt(x+44, y+40, img=2,**player.keys_texture_dict[player.id]['key right'])
+                        if player.keys_dict[player.id]['key up'] in App.ressourcePack.keys:
+                            App.ressourcePack.keys[player.keys_dict[player.id]['key up']].draw(x+24, y+20)
+                        if player.keys_dict[player.id]['key left'] in App.ressourcePack.keys:
+                            App.ressourcePack.keys[player.keys_dict[player.id]['key left']].draw(x+4, y+40)
+                        if player.keys_dict[player.id]['key down'] in App.ressourcePack.keys:
+                            App.ressourcePack.keys[player.keys_dict[player.id]['key down']].draw(x+24, y+40)
+                        if player.keys_dict[player.id]['key right'] in App.ressourcePack.keys:
+                            App.ressourcePack.keys[player.keys_dict[player.id]['key right']].draw(x+44, y+40)
 
                         pyxel.text(x+84, y+12, 'tirer :', color)
-                        pyxel.blt(x+84, y+20, img=2,**player.keys_texture_dict[player.id]['key shoot'])
+                        if player.keys_dict[player.id]['key shoot'] in App.ressourcePack.keys:
+                            App.ressourcePack.keys[player.keys_dict[player.id]['key shoot']].draw(x+84, y+20)
                 else :
                     pyxel.cls(1)
                     pyxel.text(100,70,"Mashbattleship",7)
@@ -298,26 +306,10 @@ class Player:
             "key shoot" : pyxel.KEY_V
         }
     }
-    keys_texture_dict : dict[int,dict[str, dict[str, int]]] = {
-        0 : {
-            "key up" : {'u' : 0, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key down" : {'u' : 16, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key left" : {'u' : 32, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key right" : {'u' : 48, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key shoot" : {'u' : 64, 'v' : 0, 'w' : 16, 'h' : 16, 'colkey' : 0}
-        },
-        1 : {
-            "key up" : {'u' : 0, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key down" : {'u' : 16, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key left" : {'u' : 32, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key right" : {'u' : 48, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0},
-            "key shoot" : {'u' : 64, 'v' : 16, 'w' : 16, 'h' : 16, 'colkey' : 0}
-        }
-    }
 
 
     def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, name : str|None = None):
-        self.id = id if (id in Player.keys_dict) and (id in Player.keys_texture_dict) else 0
+        self.id = id if (id in Player.keys_dict) else 0
         self.grid = Grille(self,8,8, grid_colors, grid_offset[0], grid_offset[1])
         self.cursorColor = cursor_color
         self.roundpoint = False
@@ -483,7 +475,7 @@ class SpriteAnimated(Sprite):
         self.finished = False
 
 
-    def draw(self, x, y, *, scale = None, rotate = None):
+    def draw(self, x, y, *, scale : float|None = None, rotate : float|None = None):
         self.frameCount += 1
         if self.frameCount > self.delay:
             self.frameCount = 0
@@ -500,19 +492,158 @@ class SpriteAnimated(Sprite):
         return SpriteAnimated(self.delay, *self.sprites, loop=self.loop)
 
 
+class RessourcePack:
+    boats : dict[str, dict[tuple[int,int], Sprite]] = {
+        "boat1" : {
+            (0,0) : {
+                'alive' : Sprite(0, 0, 0, 16, 16, colkey=0), 
+                'dead' : Sprite(0, 0, 16, 16, 16, colkey=1)
+            }
+        },
+        "boat2x" : {
+            (0, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1)
+            },
+            (1, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
+            }
+        },
+        "boat2y" : {
+            (0, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
+            },
+            (0, 1): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            }
+        },
+        "boat3x" : {
+            (0, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1)
+            },
+            (1, 0): {
+                "alive": Sprite(0, 32, 0, 16, 16, colkey=0),
+                "dead": Sprite(0, 32, 16, 16, 16, colkey=1)
+            },
+            (2, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
+            }
+        },
+        "boat3y" : {
+            (0, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
+            },
+            (0, 1): {
+                "alive": Sprite(0, 32, 0, 16, 16, colkey=0, rotate=90),
+                "dead": Sprite(0, 32, 16, 16, 16, colkey=1, rotate=90)
+            },
+            (0, 2): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            }
+        },
+        "boatLtl" : {
+            (0, 0): {
+                "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=-90),
+                "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=-90)
+            },
+            (1, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
+            },
+            (0, 1): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            }
+        },
+        "boatLtr" : {
+            (0, 0): {
+                "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=0),
+                "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=0)
+            },
+            (-1, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=0),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
+            },
+            (0, 1): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
+            }
+        },
+        "boarLbl" : {
+            (0, 0): {
+                "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
+                "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
+            },
+            (1, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=180),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
+            },
+            (0, -1): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            }
+        },
+        "boatLbr" : {
+            (0, 0): {
+                "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
+                "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
+            },
+            (-1, 0): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=0),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
+            },
+            (0, -1): {
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
+            }
+        }
+    }
+
+    keys : dict[str, Sprite] = {
+        pyxel.KEY_UP : Sprite(2, 0,0,16,16,colkey=0),
+        pyxel.KEY_DOWN : Sprite(2, 16,0,16,16,colkey=0),
+        pyxel.KEY_LEFT : Sprite(2, 32,0,16,16,colkey=0),
+        pyxel.KEY_RIGHT : Sprite(2, 48,0,16,16,colkey=0),
+        pyxel.KEY_M : Sprite(2, 64,0,16,16,colkey=0),
+        pyxel.KEY_Z : Sprite(2, 0,16,16,16,colkey=0),
+        pyxel.KEY_S : Sprite(2, 16,16,16,16,colkey=0),
+        pyxel.KEY_Q : Sprite(2, 32,16,16,16,colkey=0),
+        pyxel.KEY_D : Sprite(2, 48,16,16,16,colkey=0),
+        pyxel.KEY_V : Sprite(2, 64,16,16,16,colkey=0)
+    }
+    def __init__(self):
+        pyxel.load('assets/battleShip.pyxres')
+    
+    def get_available_ressourcepack(self) -> list[str]:
+        return ['default'] + [directory for directory in os.listdir('assets') if (os.path.isdir(f'assets/{directory}') and 'ressources.json' in os.listdir(f'assets/{directory}'))]
+    
+    def change_ressourcepack(self, ressourcepack_name : str) -> None:
+        if not ressourcepack_name in self.get_available_ressourcepack():
+            return
+        
+        if ressourcepack_name == 'default':
+            pyxel.load('assets/battleShip.pyxres')
+            self.boats = App.ressourcePack.boats
 
 
 class DaddyBoat:
     name : str = "DaddyBoat" #nom du bateau (utile pour les textures)
     #coordonnées relative au type du bateau
-    relativeCoordinates : dict[tuple[int,int], dict[str, 'Sprite']] = {} #{coordonnées relatifs a ceux données lors de l'initialisation  : {'alive' (et 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}
+    relativeCoordinates : list[tuple[int,int]] = {} #{coordonnées relatifs a ceux données lors de l'initialisation  : {'alive' (et 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}
     
     def __init__(self, grid : "Grille", coord : tuple[int,int], *, is_fake : bool = False):
         self.grid = grid
         self.size = grid.tileSize
         self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, Sprite]]] = {} #{coordonnées : alive? , {'alive' (et/ou 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}}
-        for key, value in self.relativeCoordinates.items():
-            self.coordinates[(coord[0]+key[0],coord[1]+key[1])] = {'alive' : True, 'is_trap' : False, 'sprites' : value}
+        for x,y in self.relativeCoordinates:
+            self.coordinates[(coord[0]+x,coord[1]+y)] = {'alive' : True, 'is_trap' : False, 'sprites' : App.ressourcePack.boats[self.name][(x,y)] if self.name in App.ressourcePack.boats else {}}
 
         self.alive : bool = True if self.coordinates else False
 
@@ -565,14 +696,14 @@ class DaddyBoat:
 
 
 class Boat1(DaddyBoat):
-    name = "Boat1"
+    name = "boat1"
     relativeCoordinates = {
         (0,0) :{'alive' : Sprite(0, 0, 0, 16, 16, colkey=0), 
                 'dead' : Sprite(0, 0, 16, 16, 16, colkey=1)}
     }
 
 class Boat2x(DaddyBoat):
-    name = "Boat2x"
+    name = "boat2x"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
@@ -585,7 +716,7 @@ class Boat2x(DaddyBoat):
     }
 
 class Boat2y(DaddyBoat):
-    name = "Boat2y"
+    name = "boat2y"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
@@ -598,7 +729,7 @@ class Boat2y(DaddyBoat):
     }
 
 class Boat3x(DaddyBoat):
-    name = "Boat3x"
+    name = "boat3x"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 16, 0, 16, 16, colkey=0),
@@ -615,7 +746,7 @@ class Boat3x(DaddyBoat):
     }
 
 class Boat3y(DaddyBoat):
-    name = "Boat3y"
+    name = "boat3y"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
@@ -632,7 +763,7 @@ class Boat3y(DaddyBoat):
     }
 
 class BoatLtl(DaddyBoat):
-    name = "BoatLtl"
+    name = "boatLtl"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=-90),
@@ -649,7 +780,7 @@ class BoatLtl(DaddyBoat):
     }
 
 class BoatLtr(DaddyBoat):
-    name = "BoatLtr"
+    name = "boatLtr"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=0),
@@ -666,7 +797,7 @@ class BoatLtr(DaddyBoat):
     }
 
 class BoatLbl(DaddyBoat):
-    name = "BoatLbl"
+    name = "boatLbl"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
@@ -683,7 +814,7 @@ class BoatLbl(DaddyBoat):
     }
 
 class BoatLbr(DaddyBoat):
-    name = "BoatLbr"
+    name = "boatLbr"
     relativeCoordinates = {
         (0, 0): {
             "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
@@ -774,11 +905,9 @@ class Grille :
         # retour demande au bateau si il a été touché si il est sur cette case sinon retourne False
         if coord in self.coordinatesBoat:
             self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize), False))
-            print(self.explosions.get_sprites())
             return self.coordinatesBoat[coord].get_shot(coord)
         
         self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize)))
-        print(self.explosions.get_sprites())
         return False
     
     def draw(self):
