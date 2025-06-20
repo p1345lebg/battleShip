@@ -24,7 +24,7 @@ class App:
         self.add_player(Player(self, 1, (128,128), (4,9), 9, name="player 2"))
         self.playersAlive : list[Player] = [player for player in self.players]
         self.tutorial = False
-        self.shopgrid = Grille(width=4,height=2,rendertype=1)
+        self.shopgrid = ShopGrid(self.players[0])
         
 
         pyxel.run(self.update,self.draw)
@@ -253,10 +253,8 @@ class App:
                 pyxel.text(5,5,"SHOP",7)
                 pyxel.rect(20,10,210,50,5)
                 pyxel.rect(20,70,210,150,5)
+                self.shopgrid.draw()
                 for i in range(4):
-                    pyxel.rect(27 + 50*i,15,45,43,13)
-
-                    pyxel.rect(27 + 50*i,80,45,130,13)
                     match self.shoplist[i][0]:
                         case "+1 HITPOINT":
                             pyxel.text(28 + 50*i,81,"+1HP",7)
@@ -312,7 +310,7 @@ class Player:
 
     def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, name : str|None = None):
         self.id = id if (id in Player.keys_dict) else 0
-        self.grid = Grille(self,8,8, grid_colors, grid_offset[0], grid_offset[1])
+        self.grid = GameGrid(self,grid_offset, *grid_colors)
         self.cursorColor = cursor_color
         self.roundpoint = False
 
@@ -322,13 +320,13 @@ class Player:
 
 
         self.opponents : list[Player] = []
-        self.opponentsGrid : list[Grille] = []
-        self.opponentGridCusor : dict[Grille, Cursor] = {}
+        self.opponentsGrid : list[GameGrid] = []
+        self.opponentGridCusor : dict[GameGrid, Cursor] = {}
         self.menucursor : Cursor
         self.cooldown = 0
         self.hp = 9
         self.hp_left = 9
-        self.set : list[DaddyBoat] = [Boat1,Boat3x,Boat2x,BoatLtl] #liste de 4 bateaux
+        self.set : list[DaddyBoat] = ShopGrid.boatSets['default']
         self.money = 0
         self.frames_between_shoot = [20,40] #(tir réussi, tir raté)
         self.bonus_money =  0 # argent en + par round
@@ -381,12 +379,12 @@ class Player:
             case "game":
                 for cursor in self.opponentGridCusor.values():
                     x1, y1 = cursor.pos[0]+x, cursor.pos[1]+y
-                    if self.grid.on_grid((x1,y1)):
+                    if self.grid.on_grid(x1,y1):
                         cursor.pos = [x1,y1]
             
             case "shop":
                 x1, y1 = self.menucursor.pos[0]+x, self.menucursor.pos[1]+y
-                if shopgrid.on_grid((x1,y1)):
+                if shopgrid.on_grid(x1,y1):
                     self.menucursor.pos = [x1,y1]
 
     def shoot(self):
@@ -651,14 +649,63 @@ class RessourcePack:
                         self.boats[key][coord][name] = Sprite(**texture) if any(kwarg in texture for kwarg in ['img', 'u', 'v', 'w', 'h']) else None
 
 
+class Grid:
+    def __init__(self, offset : tuple[int,int],
+                    size : tuple[int,int],
+                    tile_size : tuple[int,int],
+                    *color : int,
+                    gap : None|tuple[int,int] = None,
+                    special_tile_size : None|dict[str, dict[int, int]] = None):
+        """
+        
+        """
+        self.coord : tuple[int,int] = offset
+        self.offsetx = offset[0]
+        self.offsety = offset[1]
+        self.width : int
+        self.height : int
+        self.width, self.height = size
+
+        self.tileSize : int = tile_size
+        self.colors : list[int] = list(color) if color else [0]
+        self.gap : int = gap if gap else (0,0)
+        self.specialTileSize : dict[str, dict[int, int]] = {
+            "x" : special_tile_size["x"] if "x" in special_tile_size else {},
+            "y" : special_tile_size["y"] if "y" in special_tile_size else {}
+        } if special_tile_size else {"x" : {}, "y" : {}}
+
+    def draw(self):
+        x, y = self.coord
+        cindex = 0
+        maxcindex = len(self.colors)
+        pw, ph = 0,0
+        for i in range(self.width):
+            w = self.tileSize[0] if i not in self.specialTileSize['x'] else self.specialTileSize['x'][i]
+            for j in range(self.height):
+                h = self.tileSize[1] if j not in self.specialTileSize['y'] else self.specialTileSize['y'][j]
+                pyxel.rect(x, y, w, h, self.colors[cindex])
+                y+=h+self.gap[1]
+                cindex = (cindex+1)%maxcindex
+            cindex = (cindex+1)%maxcindex
+            y = self.coord[1]
+            x+=w+self.gap[0]
+
+    def on_grid(self, x,y):
+        return 0 <= x < self.width and 0 <= y < self.height
+
+    def select(self, x,y):
+        if not self.on_grid(x,y):
+            raise IndexError
+
+
 
 class DaddyBoat:
     name : str = "DaddyBoat" #nom du bateau (utile pour les textures)
     relativeCoordinates : list[tuple[int,int]] = [] # liste des coordonnées relative du batteau
     
-    def __init__(self, grid : "Grille", coord : tuple[int,int], *, is_fake : bool = False):
+    def __init__(self, grid : "GameGrid", coord : tuple[int,int], *, is_fake : bool = False):
         self.grid = grid
-        self.size = grid.tileSize
+        self.size = grid.tileSize[0]
         self.coordinates : dict[tuple[int,int], dict[str, bool|dict[str, Sprite]]] = {} #{coordonnées : alive? , {'alive' (et/ou 'dead') : {kwargs pour l'image ('u','v','w' et 'h' sont obligatoire sinon la texture ne seras pas rendue)}}}}
         for x,y in self.relativeCoordinates:
             self.coordinates[(coord[0]+x,coord[1]+y)] = {'alive' : True, 'is_trap' : False, 'sprites' : App.ressourcePack.boats[self.name][(x,y)] if (self.name in App.ressourcePack.boats and (x,y) in App.ressourcePack.boats[self.name]) else {}}
@@ -785,7 +832,7 @@ class BoatLbr(DaddyBoat):
 
 
 class Cursor :
-    def __init__(self, player : Player, grid : 'Grille', position = [0,0]):
+    def __init__(self, player : Player, grid : Grid, position = [0,0]):
         self.pos = position
         self.player = player
         self.grid = grid
@@ -817,66 +864,34 @@ class Cursor :
             if attacker:
                 attacker.cooldown = self.player.frames_between_shoot[1]
     
+    def select(self):
+        self.grid.select(*self.pos)
 
 
-
-class Grille :
-    def __init__(self, player = None ,width : int = 0, height : int = 0, colors = [0,2], offsetx : int = 0, offsety : int = 0,rendertype : int = 0):
-        if player != None:
-            self.player = player
-        if width != 0:
-            self.width : int = width
-        if height != 0:
-            self.height : int = height
-        self.tileSize = 16
-        
-        self.offsetx = offsetx
-        self.offsety = offsety
-        if colors != None:
-            self.col1 = colors[0]
-            self.col2 = colors[1]
-
-        self.rendertype = rendertype #si le rendertype != 0 , la grille est invisible, le curseur render tout
-        if rendertype == 0:
-            self.boats : list[DaddyBoat] = []
-            self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] = {} #{coordonnée : bateau a ces coordonnées}
-
+class GameGrid(Grid):
+    def __init__(self, player, coord, *color):
+        super().__init__(coord, (8,8), (16,16), *color)
+        self.player : Player = player
+        self.boats : list[DaddyBoat] = []
+        self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] # coordonnées ou sont les bateaux suivit du bateau a ces coordonnées
         self.explosions : SpriteGroup = SpriteGroup()
 
-        
-        
-    def on_grid(self, coord : tuple[int,int]):
-        # verifie que les coordonnées soient bien sur la grille
-        if 0 <= coord[0] < self.width and 0 <= coord[1] < self.height:
-            
-            return True
-        return False
-    
-    def shoot_boat(self, coord : tuple[int,int]) -> bool:
+    def shoot_boat(self, coord : tuple[int,int]):
         # retour demande au bateau si il a été touché si il est sur cette case sinon retourne False
         if coord in self.coordinatesBoat:
-            self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize), False))
+            self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize[0], self.offsety+coord[1]*self.tileSize[1]), False))
             return self.coordinatesBoat[coord].get_shot(coord)
         
-        self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize, self.offsety+coord[1]*self.tileSize)))
+        self.explosions.add_sprite(Explosion((self.offsetx+coord[0]*self.tileSize[0], self.offsety+coord[1]*self.tileSize[1])))
         return False
     
     def draw(self):
-        match self.rendertype:
-            case 0:
-                for i in range(8):
-                    for j in range(8):
-                        if (i+j)%2:
-                            pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col1)
-                        else:
-                            pyxel.rect(16*i +self.offsetx,16*j + self.offsety ,16,16,self.col2)
+        super().draw()
+        for boat in self.boats:
+            boat.draw()
+        for explosion in self.explosions.get_sprites():
+            explosion.draw()
 
-                for boat in self.boats:
-                    boat.draw()
-                for explosion in self.explosions.get_sprites():
-                    explosion.draw()
-                
-        
     def generate_boat(self, boats_list : list[DaddyBoat]):
         # reiniitalise la grille
         self.explosions.clear()
@@ -896,22 +911,23 @@ class Grille :
                 temp = boat(self, (x,y))
                 # verifie que le batteau de touche aucun autre batteau deja placé
                 for coord in temp.get_coordinates():
-                    if coord in coords or not (self.on_grid(coord)):
+                    if coord in coords or not (self.on_grid(*coord)):
                         ok = False
                         break
                 # ajoute le bateau si les conditions précédantes sont respectées
                 if ok:
                     coords += temp.get_coordinates()
                     self.boats.append(temp)
-                # sinon retire la vie associées au joueur (en développement)
-                else:
+                stop -= 1
+            else:
+                if not ok: # retire la vie correcsondant au bateau si celui-ci n'est pas placé
                     if boat in [Boat1]:
                         n = 1
                     elif boat in [Boat2x,Boat2y]:
                         n = 2
                     elif boat in [Boat3x,Boat3y,BoatLtl,BoatLtr,BoatLbr,BoatLbl]:
                         n = 3
-                stop -= 1
+                    self.player.hp_left -= n
         for boat in self.boats:
             for coord in boat.coordinates:
                 self.coordinatesBoat[coord] = boat
@@ -943,6 +959,85 @@ class Grille :
             boat : DaddyBoat
             boat.coordinates[coordinates]['is_trap'] = True
 
+class Upgrade:
+    price : int = 0
+    description : str = "aucune description"
+    def buy(self, player : Player):
+        """ajoute l'amelioration au joueur"""
+
+    def render(self, x, y):
+        """rendu dans le shop"""
+
+    def activate(self, player : Player):
+        """
+        active son action
+
+            player : joueur qui subit les effets
+        """
+
+
+class Upgrade1Hitpoint(Upgrade):
+    price = 15
+    description = "augmente de 1 les HPs du joueur"
+    def buy(self, player : Player):
+        if player.money < self.price:
+            return
+        
+        player.hp += 1
+
+    def render(self, x, y):
+        pyxel.text(x+4, y+4, '+1 HITPOINT', 7)
+
+class Upgrade3Hitpoint(Upgrade):
+    price = 40
+    description = "augmente de 3 les HPs du joueur"
+    def buy(self, player : Player):
+        if player.money < self.price:
+            return
+        
+        player.hp += 3
+
+    def render(self, x, y):
+        pyxel.text(x+4, y+4, '+3 HITPOINT', 7)
+
+class UpgradeReloadtime(Upgrade):
+    price = 17
+    description = "diminue le temps avant de pouvoir tirer a nouveau"
+    def buy(self, player):
+        if player.money < self.price:
+            return
+        
+        player.frames_between_shoot[0] -= 1 if player.frames_between_shoot[0] > 0 else 0
+        player.frames_between_shoot[1] -= 1 if player.frames_between_shoot[1] > 0 else 0
+
+    def render(self, x, y):
+        pyxel.text(x+4, y+4, "- RELOAD TIME")
+
+class UpgradeMoneyAtEnd3(Upgrade):
+    price = 9
+    description = "monaie gagnee en fin de manche"
+    def buy(self, player):
+        player.bonus_money += 3
+
+    def render(self, x, y):
+        pyxel.text(x+4, y+4, "+3 MONEY @ END")
+
+
+class ShopGrid(Grid):
+    boatSets : dict[str, list[DaddyBoat]] = { # nom du set (utile pour generer la texture du set dans le shop) : set(liste des classes de bateau)
+        "default" : [Boat1,Boat3x,Boat2x,BoatLtl]
+    }
+    upgrades : list[Upgrade] = []
+
+    def __init__(self, player : Player):
+        super().__init__((27, 15), (4,2), (45, 43), 13, gap=(5,22), special_tile_size={"y" : {1 : 130}})
+        self.player = player
+        self.upgrades : list[Upgrade] = []
+
+    def generate_shop(self):
+        self.upgrades : list[Upgrade] = random.choices(self.upgrades)
+
+
 
 class Explosion(Sprite):
     textures : dict[bool, SpriteAnimated] = {
@@ -962,7 +1057,7 @@ class Explosion(Sprite):
         )
     }
     def __init__(self, coordinates : tuple[int,int], in_water : bool = True):
-        """doit etre placé dans une variable 'self.explosions'"""
+        """doit etre placé dans un groupe de sprite"""
         self.in_water = in_water
         self.coordinates : tuple[int,int] = coordinates
         self.animation = self.textures[self.in_water].copy()
