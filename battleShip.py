@@ -102,10 +102,14 @@ class App:
                                 self.playersAlive.remove(player)
                 match len(self.playersAlive):
                     case 1: # victoire d'un des deux joueur
+                        for player in self.players:
+                            player.money+=player.bonus_money
                         self.playersAlive[0].roundpoint = True
                         self.winner = self.playersAlive[0]
                         App.gamestate = 3
                     case 0: # égalié
+                        for player in self.players:
+                            player.money+=player.bonus_money
                         self.winner = None
                         App.gamestate = 3
                 
@@ -544,11 +548,11 @@ class RessourcePack:
                 "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
             },
             (0, 1): {
-                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
-                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
             }
         },
-        "boarLbl" : {
+        "boatLbl" : {
             (0, 0): {
                 "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
                 "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
@@ -558,22 +562,22 @@ class RessourcePack:
                 "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=180)
             },
             (0, -1): {
-                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
-                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
             }
         },
         "boatLbr" : {
             (0, 0): {
-                "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=180),
-                "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=180)
+                "alive": Sprite(0, 48, 0, 16, 16, colkey=0, rotate=90),
+                "dead": Sprite(0, 48, 16, 16, 16, colkey=1, rotate=90)
             },
             (-1, 0): {
                 "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=0),
                 "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=0)
             },
             (0, -1): {
-                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=-90),
-                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=-90)
+                "alive": Sprite(0, 16, 0, 16, 16, colkey=0, rotate=90),
+                "dead": Sprite(0, 16, 16, 16, 16, colkey=1, rotate=90)
             }
         }
     }
@@ -590,8 +594,15 @@ class RessourcePack:
         pyxel.KEY_D : Sprite(2, 48,16,16,16,colkey=0),
         pyxel.KEY_V : Sprite(2, 64,16,16,16,colkey=0)
     }
+    
+    sets : dict[str, Sprite] = {
+        "default" : Sprite(0, 0, 64, 32, 32, 10),
+        "one" : Sprite(0,32,64, 32,32, 10),
+        "all" : Sprite(0,64,64, 32,32, 10)
+    }
+    
     def __init__(self):
-        """n'est valide qe pour les bateaux pour l'instant"""
+        """n'est valide que pour les bateaux pour l'instant"""
         pyxel.load('assets/battleShip.pyxres')
     
     def get_available_ressourcepack(self) -> list[str]:
@@ -833,6 +844,7 @@ class Cursor :
         h = self.grid.tileSize[1] if self.pos[1] not in self.grid.specialTileSize["y"] else self.grid.specialTileSize["y"][self.pos[1]]
 
         pyxel.rectb(x,y,w,h,self.player.cursorColor)
+        pyxel.rectb(x-1, y-1, w+2, h+2, self.player.cursorColor)
 
     def shoot(self, attacker : Player|None = None) -> bool:
         if self.grid.shoot_boat((self.pos[0], self.pos[1])):
@@ -980,13 +992,13 @@ class Upgrade1Hitpoint(Upgrade):
     def buy(self, player : Player):
         if not super().buy(player):
             return False
-        print("achat")
         
         player.hp += 1
         return True
 
     def render(self, x, y):
-        pyxel.text(x+4, y+4, '+1 HITPOINT', 7)
+        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
+        pyxel.text(x+4, y+12, '+1 HITPOINT', 7)
 
 class Upgrade3Hitpoint(Upgrade):
     price = 40
@@ -999,7 +1011,8 @@ class Upgrade3Hitpoint(Upgrade):
         return True
 
     def render(self, x, y):
-        pyxel.text(x+4, y+4, '+3 HITPOINT', 7)
+        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
+        pyxel.text(x+4, y+12, '+3 HITPOINT', 7)
 
 class UpgradeReloadtime(Upgrade):
     price = 17
@@ -1013,7 +1026,8 @@ class UpgradeReloadtime(Upgrade):
         return True
 
     def render(self, x, y):
-        pyxel.text(x+4, y+4, "- RELOAD TIME", 7)
+        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
+        pyxel.text(x+4, y+12, "- RELOAD TIME", 7)
 
 class UpgradeMoneyAtEnd3(Upgrade):
     price = 9
@@ -1026,12 +1040,15 @@ class UpgradeMoneyAtEnd3(Upgrade):
         return True
 
     def render(self, x, y):
-        pyxel.text(x+4, y+4, "+3 MONEY @ END", 7)
+        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
+        pyxel.text(x+4, y+12, "+3 MONEY @ END", 7)
 
 
 class ShopGrid(Grid):
     boatSets : dict[str, list[DaddyBoat]] = { # nom du set (utile pour generer la texture du set dans le shop) : set(liste des classes de bateau)
-        "default" : [Boat1,Boat3x,Boat2x,BoatLtl]
+        "default" : [Boat1,Boat3x,Boat2x,BoatLtl],
+        "one" : [Boat1],
+        "all" : [Boat1,Boat2x,Boat3x,Boat2y,Boat3y,BoatLbl,BoatLtl,BoatLbr,BoatLtr]
     }
     upgrades : list[Upgrade] = [
         Upgrade1Hitpoint(),
@@ -1044,6 +1061,7 @@ class ShopGrid(Grid):
         super().__init__((27, 15), (4,2), (45, 43), 13, gap=(5,22), special_tile_size={"y" : {1 : 130}})
         self.__player = player
         self.cursor = Cursor(player, self)
+        self.setsInShop : list[list[DaddyBoat]] = []
         self.upgradesInShop : list[Upgrade] = []
         self.generate_shop()
 
@@ -1057,18 +1075,28 @@ class ShopGrid(Grid):
         self.cursor = Cursor(self.player, self)
 
     def generate_shop(self):
+        self.setsInShop = random.choices(list(self.boatSets.keys()), k=4)
         self.upgradesInShop = random.choices(self.upgrades, k=4)
 
     def draw(self):
         super().draw()
         pyxel.text(self.coord[0], self.coord[1]-8, str(self.player.money), 7)
 
+        self.cursor.draw()
+
         for i in range(4):
             x = self.coord[0]+(self.tileSize[0]+self.gap[0])*i
             y = self.coord[1]+self.tileSize[1]+self.gap[1]
             self.upgradesInShop[i].render(x, y)
+
+        for i in range(4):
+            x = self.coord[0]+(self.tileSize[0]+self.gap[0])*i
+            y = self.coord[1]
+            pyxel.text(x+4 ,y+4, self.setsInShop[i], 7)
+            App.ressourcePack.sets[self.setsInShop[i]].draw(x+4,y+10)
+            
         
-        self.cursor.draw()
+        
 
     def update(self):
         if pyxel.btnp(self.player.keys_dict[self.player.id]["key up"]):
@@ -1081,8 +1109,12 @@ class ShopGrid(Grid):
             self.cursor.move(1, 0)
 
         if pyxel.btnp(self.player.keys_dict[self.player.id]["key shoot"]):
-            if self.cursor.pos[1] == 1:
-                self.upgradesInShop[self.cursor.pos[0]].buy(self.player)
+            match self.cursor.pos[1]:
+                case 0:
+                    print(self.setsInShop)
+                    self.player.set = self.boatSets[self.setsInShop[self.cursor.pos[0]]]
+                case 1:
+                    self.upgradesInShop[self.cursor.pos[0]].buy(self.player)
 
 
 
