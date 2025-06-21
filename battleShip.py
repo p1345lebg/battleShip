@@ -114,23 +114,11 @@ class App:
             case 2: #shop
                 if self.arrived_shop:
                     self.arrived_shop = False
-                    self.shoplist = []
-                    self.players[0].menucursor = Cursor(self.players[0],self.shopgrid,position=[0,0])
-                    self.players[1].menucursor = Cursor(self.players[1],self.shopgrid,position=[0,0])
-                    for i in range(4) :
-                        self.shoplist.append(self.upgrades[random.randint(0,3)])
-                    print(self.shoplist)
+                    self.shopgrid.generate_shop()
+                    self.shopgrid.player = self.winner if self.winner else self.players[0]
 
-                for player in self.players:
-                        if pyxel.btnp(player.keys_dict[player.id]["key up"]):
-                            player.move_cursor(0,-1,"shop",self.shopgrid)
-                            print(player.menucursor.pos)
-                        if pyxel.btnp(player.keys_dict[player.id]["key down"]):
-                            player.move_cursor(0,1,"shop",self.shopgrid)
-                        if pyxel.btnp(player.keys_dict[player.id]["key left"]):
-                            player.move_cursor(-1,0,"shop",self.shopgrid)
-                        if pyxel.btnp(player.keys_dict[player.id]["key right"]):
-                            player.move_cursor(1,0,"shop",self.shopgrid)
+                self.shopgrid.update()
+
 
                 
                 
@@ -254,22 +242,6 @@ class App:
                 pyxel.rect(20,10,210,50,5)
                 pyxel.rect(20,70,210,150,5)
                 self.shopgrid.draw()
-                for i in range(4):
-                    match self.shoplist[i][0]:
-                        case "+1 HITPOINT":
-                            pyxel.text(28 + 50*i,81,"+1HP",7)
-                        case "+3 HITPOINTS":
-                            pyxel.text(28 + 50*i,81,"+3HP",7)
-                        case "-RELOADTIME":
-                            pyxel.text(28 + 50*i,81,"-RELOAD",7)
-                        case "+3 MONEY @ END":
-                            pyxel.text(28 + 50*i,81,"+3  @END",7)
-                            pyxel.blt(36 + 50*i,81,1,0,16,8,8,0)
-                
-                for player in self.players:
-                        player.menucursor.drawcursor(2)
-
-                    
 
             case 3:
                 if self.winner:
@@ -666,7 +638,7 @@ class Grid:
         self.height : int
         self.width, self.height = size
 
-        self.tileSize : int = tile_size
+        self.tileSize : tuple[int, int] = tile_size
         self.colors : list[int] = list(color) if color else [0]
         self.gap : int = gap if gap else (0,0)
         self.specialTileSize : dict[str, dict[int, int]] = {
@@ -854,6 +826,14 @@ class Cursor :
                     pyxel.rectb(27 + 50*self.pos[0],80,45,130,self.col)
                 else : pyxel.rectb(27 + 50*self.pos[0],15,45,43,self.col)
 
+    def draw(self):
+        x = self.grid.coord[0]+(self.grid.tileSize[0]+self.grid.gap[0])*self.pos[0]
+        y = self.grid.coord[1]+(self.grid.tileSize[1]+self.grid.gap[1])*self.pos[1]
+        w = self.grid.tileSize[0] if self.pos[0] not in self.grid.specialTileSize["x"] else self.grid.specialTileSize["x"][self.pos[0]]
+        h = self.grid.tileSize[1] if self.pos[1] not in self.grid.specialTileSize["y"] else self.grid.specialTileSize["y"][self.pos[1]]
+
+        pyxel.rectb(x,y,w,h,self.player.cursorColor)
+
     def shoot(self, attacker : Player|None = None) -> bool:
         if self.grid.shoot_boat((self.pos[0], self.pos[1])):
             self.grid.player.hp_left -= 1
@@ -866,6 +846,12 @@ class Cursor :
     
     def select(self):
         self.grid.select(*self.pos)
+
+    def move(self, x,y):
+        x += self.pos[0]
+        y += self.pos[1]
+        if self.grid.on_grid(x,y):
+            self.pos = [x,y]
 
 
 class GameGrid(Grid):
@@ -959,11 +945,23 @@ class GameGrid(Grid):
             boat : DaddyBoat
             boat.coordinates[coordinates]['is_trap'] = True
 
+
+
+
 class Upgrade:
     price : int = 0
     description : str = "aucune description"
-    def buy(self, player : Player):
-        """ajoute l'amelioration au joueur"""
+    def buy(self, player : Player) -> bool:
+        """ajoute l'amelioration au joueur
+        
+        return:
+            True si l'amelioration est achetée
+            False si l'achat échoue
+        """
+        if player.money < self.price:
+            return False
+        player.money -= self.price
+        return True
 
     def render(self, x, y):
         """rendu dans le shop"""
@@ -980,10 +978,12 @@ class Upgrade1Hitpoint(Upgrade):
     price = 15
     description = "augmente de 1 les HPs du joueur"
     def buy(self, player : Player):
-        if player.money < self.price:
-            return
+        if not super().buy(player):
+            return False
+        print("achat")
         
         player.hp += 1
+        return True
 
     def render(self, x, y):
         pyxel.text(x+4, y+4, '+1 HITPOINT', 7)
@@ -992,10 +992,11 @@ class Upgrade3Hitpoint(Upgrade):
     price = 40
     description = "augmente de 3 les HPs du joueur"
     def buy(self, player : Player):
-        if player.money < self.price:
-            return
+        if not super().buy(player):
+            return False
         
         player.hp += 3
+        return True
 
     def render(self, x, y):
         pyxel.text(x+4, y+4, '+3 HITPOINT', 7)
@@ -1004,38 +1005,84 @@ class UpgradeReloadtime(Upgrade):
     price = 17
     description = "diminue le temps avant de pouvoir tirer a nouveau"
     def buy(self, player):
-        if player.money < self.price:
-            return
+        if not super().buy(player):
+            return False
         
         player.frames_between_shoot[0] -= 1 if player.frames_between_shoot[0] > 0 else 0
         player.frames_between_shoot[1] -= 1 if player.frames_between_shoot[1] > 0 else 0
+        return True
 
     def render(self, x, y):
-        pyxel.text(x+4, y+4, "- RELOAD TIME")
+        pyxel.text(x+4, y+4, "- RELOAD TIME", 7)
 
 class UpgradeMoneyAtEnd3(Upgrade):
     price = 9
     description = "monaie gagnee en fin de manche"
     def buy(self, player):
+        if not super().buy(player):
+            return False
+        
         player.bonus_money += 3
+        return True
 
     def render(self, x, y):
-        pyxel.text(x+4, y+4, "+3 MONEY @ END")
+        pyxel.text(x+4, y+4, "+3 MONEY @ END", 7)
 
 
 class ShopGrid(Grid):
     boatSets : dict[str, list[DaddyBoat]] = { # nom du set (utile pour generer la texture du set dans le shop) : set(liste des classes de bateau)
         "default" : [Boat1,Boat3x,Boat2x,BoatLtl]
     }
-    upgrades : list[Upgrade] = []
+    upgrades : list[Upgrade] = [
+        Upgrade1Hitpoint(),
+        Upgrade3Hitpoint(),
+        UpgradeReloadtime(),
+        UpgradeMoneyAtEnd3()
+    ]
 
     def __init__(self, player : Player):
         super().__init__((27, 15), (4,2), (45, 43), 13, gap=(5,22), special_tile_size={"y" : {1 : 130}})
-        self.player = player
-        self.upgrades : list[Upgrade] = []
+        self.__player = player
+        self.cursor = Cursor(player, self)
+        self.upgradesInShop : list[Upgrade] = []
+        self.generate_shop()
+
+    @property
+    def player(self):
+        return self.__player
+    
+    @player.setter
+    def player(self, player : Player):
+        self.__player = player
+        self.cursor = Cursor(self.player, self)
 
     def generate_shop(self):
-        self.upgrades : list[Upgrade] = random.choices(self.upgrades)
+        self.upgradesInShop = random.choices(self.upgrades, k=4)
+
+    def draw(self):
+        super().draw()
+        pyxel.text(self.coord[0], self.coord[1]-8, str(self.player.money), 7)
+
+        for i in range(4):
+            x = self.coord[0]+(self.tileSize[0]+self.gap[0])*i
+            y = self.coord[1]+self.tileSize[1]+self.gap[1]
+            self.upgradesInShop[i].render(x, y)
+        
+        self.cursor.draw()
+
+    def update(self):
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key up"]):
+            self.cursor.move(0, -1)
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key down"]):
+            self.cursor.move(0, 1)
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key left"]):
+            self.cursor.move(-1, 0)
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key right"]):
+            self.cursor.move(1, 0)
+
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key shoot"]):
+            if self.cursor.pos[1] == 1:
+                self.upgradesInShop[self.cursor.pos[0]].buy(self.player)
 
 
 
