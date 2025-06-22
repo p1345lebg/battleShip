@@ -6,7 +6,7 @@ import json
 import ast
 
 class App:
-    gamestate : int = 0 # 0 = main menu ; 1 = principal ; 2 = shop ; 3 = FIN
+    gamestate : int = 0 # 0 = main menu ; 1 = principal ; 2 = shop ; 3 = FIN ; 4 = choix ressourcepack
     ressourcePack = None
     
     def __init__(self):
@@ -25,6 +25,7 @@ class App:
         self.playersAlive : list[Player] = [player for player in self.players]
         self.tutorial = False
         self.shopgrid = ShopGrid(self.players[0])
+        self.ressourcePackGrid = RessourcePackGrid(self.players[0])
         
 
         pyxel.run(self.update,self.draw)
@@ -56,6 +57,8 @@ class App:
             App.gamestate = 3
         elif pyxel.btnp(pyxel.KEY_U):
             App.gamestate = 0
+        elif pyxel.btnp(pyxel.KEY_R):
+            App.gamestate = 4
 
         match App.gamestate:
             case 0:
@@ -155,6 +158,9 @@ class App:
                         player.place_set()
                     self.arrived_game = 60
                     App.gamestate = 1
+
+            case 4:
+                self.ressourcePackGrid.update()
                 
 
     
@@ -259,6 +265,10 @@ class App:
                 pyxel.text(70,137,"press spacebar to start again",7)
                 pyxel.circ(70,100,20,0)
                 pyxel.circ(186,100,20,0)
+
+            case 4:
+                pyxel.cls(1)
+                self.ressourcePackGrid.draw()
 
 
 
@@ -679,6 +689,37 @@ class Grid:
     def select(self, x,y):
         if not self.on_grid(x,y):
             raise IndexError
+
+
+class RessourcePackGrid(Grid):
+    def __init__(self, player : Player):
+        self.player = player
+        self.ressourcePacks = App.ressourcePack.get_available_ressourcepack()
+        super().__init__((16,16), (1,len(self.ressourcePacks)), (224,32), 13, gap=(8, 8))
+        self.cursor = Cursor(player, self)
+
+    def draw(self):
+        super().draw()
+        for i in range(len(self.ressourcePacks)):
+            x = 20
+            y = 20+(self.tileSize[1]+self.gap[1])*i
+            pyxel.text(x,y, self.ressourcePacks[i], 7)
+        self.cursor.draw()
+
+    def update(self):
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key up"]):
+            self.cursor.move(0, -1)
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key down"]):
+            self.cursor.move(0, 1)
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key left"]):
+            self.cursor.move(-1, 0)
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key right"]):
+            self.cursor.move(1, 0)
+
+        if pyxel.btnp(self.player.keys_dict[self.player.id]["key shoot"]):
+            App.ressourcePack.change_ressourcepack(self.ressourcePacks[self.cursor.pos[1]])
+            print("ok")
+
 
 
 
@@ -1111,7 +1152,6 @@ class ShopGrid(Grid):
         if pyxel.btnp(self.player.keys_dict[self.player.id]["key shoot"]):
             match self.cursor.pos[1]:
                 case 0:
-                    print(self.setsInShop)
                     self.player.set = self.boatSets[self.setsInShop[self.cursor.pos[0]]]
                 case 1:
                     self.upgradesInShop[self.cursor.pos[0]].buy(self.player)
