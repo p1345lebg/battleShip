@@ -705,7 +705,6 @@ class RessourcePack:
         
         if ressourcepack_name == 'default':
             pyxel.load('assets/battleShip.pyxres')
-            self.colorPalette = RessourcePack.colorPalette
             self.boats = RessourcePack.boats
             self.keys = RessourcePack.keys
             self.sets = RessourcePack.sets
@@ -732,10 +731,20 @@ class RessourcePack:
             self.players = file["players"]
 
         if "keys" in file:
-            self.keys = file["keys"]
+            self.keys = {}
+            for key in RessourcePack.sets.keys():
+                if key in file["keys"]:
+                    self.sets[key] = Sprite(**file["sets"][key])
+                else:
+                    self.sets[key] = Sprite(0, 0, 0, 16, 16)
 
         if "sets" in file:
-            self.sets = file["sets"]
+            self.sets = {}
+            for key in RessourcePack.sets.keys():
+                if key in file["sets"]:
+                    self.sets[key] = Sprite(**file["sets"][key])
+                else:
+                    self.sets[key] = Sprite(0, 0, 0, 16, 16)
 
 
 class Grid:
@@ -1213,7 +1222,7 @@ class ShopGrid(Grid):
 
     def draw(self):
         super().draw()
-        self.colors = App.ressourcePack.ui["shop"]["primary"]
+        self.colors = [App.ressourcePack.ui["shop"]["primary"]]
         textColor = App.ressourcePack.ui["shop"]["text"]
         pyxel.text(self.coord[0], self.coord[1]-8, str(self.player.money), textColor)
 
