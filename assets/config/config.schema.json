@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "ui": { "$ref": "ui.schema.json" },
+    "players": { "$ref": "players.schema.json" },
+    "boats": { "$ref": "boats.schema.json" },
+    "keys": { "$ref": "keys.schema.json" },
+    "sets": { "$ref": "sets.schema.json" }
+  },
+  "required": []
+}

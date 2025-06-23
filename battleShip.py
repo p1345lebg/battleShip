@@ -20,8 +20,8 @@ class App:
         self.arrived_shop = True
         self.arrived_game = 60
         self.players : list[Player] = []
-        self.add_player(Player(self, 0, (0,0), (3,11), 3, name="player 1"))
-        self.add_player(Player(self, 1, (128,128), (4,9), 9, name="player 2"))
+        self.add_player(Player(self, 0, (0,0), (3,11), 3, 0, name="player 1"))
+        self.add_player(Player(self, 1, (128,128), (4,9), 9, 1, name="player 2"))
         self.playersAlive : list[Player] = [player for player in self.players]
         self.tutorial = False
         self.shopgrid = ShopGrid(self.players[0])
@@ -170,16 +170,18 @@ class App:
             case 0:
                 #graphismes pour le main menu
                 if self.tutorial :
-                    pyxel.cls(1)
-                    pyxel.text(50,26,"ceci est un jeu de bataille navale different",7)
-                    pyxel.text(20,32,"chaque joueur doit eliminer les bateau de l'autre",7)
-                    pyxel.text(20,38,"le plus rapidement possible",7)
-                    pyxel.text(20,52, "controles :", 7)
+                    textColor = App.ressourcePack.ui["tutorial"]["text"]
+                    background = App.ressourcePack.ui["tutorial"]["background"]
+                    pyxel.cls(background)
+                    pyxel.text(50,26,"ceci est un jeu de bataille navale different",textColor)
+                    pyxel.text(20,32,"chaque joueur doit eliminer les bateau de l'autre",textColor)
+                    pyxel.text(20,38,"le plus rapidement possible",textColor)
+                    pyxel.text(20,52, "controles :", textColor)
                     for i in range(len(self.players)):
                         x = 20
                         y = 60+68*i
                         player = self.players[i]
-                        color = player.cursorColor
+                        color = App.ressourcePack.players[str(player.color)]["tutorial color"]
                         pyxel.rectb(x,y,220,60,color)
                         pyxel.text(x+4, y+4, str(player), color)
 
@@ -197,13 +199,15 @@ class App:
                         if player.keys_dict[player.id]['key shoot'] in App.ressourcePack.keys:
                             App.ressourcePack.keys[player.keys_dict[player.id]['key shoot']].draw(x+84, y+20)
                 else :
-                    pyxel.cls(1)
-                    pyxel.text(100,70,"Mashbattleship",7)
-                    pyxel.text(118,135,"press",7)
+                    textColor = App.ressourcePack.ui["main menu"]["text"]
+                    background = App.ressourcePack.ui["main menu"]["background"]
+                    pyxel.cls(background)
+                    pyxel.text(100,70,"Mashbattleship",textColor)
+                    pyxel.text(118,135,"press",textColor)
                     pyxel.blt(104,150, 2, 0, 32, 48, 16, 0)
-                    pyxel.text(112, 170, 'to start', 7)
+                    pyxel.text(112, 170, 'to start', textColor)
 
-                    pyxel.text(128-44,200,"press  t  for tutorial",7)
+                    pyxel.text(128-44,200,"press  t  for tutorial",textColor)
                     pyxel.blt(128-44+22, 195, 2, 48, 32, 16, 16, 0, scale=0.8)
 
 
@@ -220,8 +224,29 @@ class App:
 
                 else:
                     pyxel.cls(13)
-                    pyxel.rect(128,0,128,128,5)
-                    pyxel.rect(0,128,128,128,14)
+
+                    #--------UI joueur 1-----------
+                    player = self.players[0]
+                    background = App.ressourcePack.players[str(player.color)]["stat window"]["background"]
+                    textColor = App.ressourcePack.players[str(player.color)]["stat window"]["text"]
+                    hpBarColor = App.ressourcePack.players[str(player.color)]["stat window"]["hp bar"]
+                    pyxel.rect(128,0,128,128,background)
+                    pyxel.rect(140,115,110,10,0)
+                    pyxel.rect(142,117, (106* player.hp_left) / player.hp ,6,hpBarColor)
+
+                    pyxel.text(147,101,str(player.money),textColor)
+                    pyxel.blt(140,100,1,0,16,8,8,0)
+                    #--------UI joueur 2-----------
+                    player = self.players[1]
+                    background = App.ressourcePack.players[str(player.color)]["stat window"]["background"]
+                    textColor = App.ressourcePack.players[str(player.color)]["stat window"]["text"]
+                    hpBarColor = App.ressourcePack.players[str(player.color)]["stat window"]["hp bar"]
+                    pyxel.rect(0,128,128,128,background)
+                    pyxel.rect(5,133,110,10,0)
+                    pyxel.rect(7,135, (106* player.hp_left) / player.hp ,6,hpBarColor)
+
+                    pyxel.text(10,146,str(player.money),textColor)
+                    pyxel.blt(3,145,1,0,16,8,8,0)
 
                     for player in self.players:
                         player.grid.draw()
@@ -230,44 +255,39 @@ class App:
                     for player in self.players:
                         player.draw_cursors(1)
 
-                    #--------UI joueur 1-----------
-                    pyxel.rect(140,115,110,10,0)
-                    pyxel.rect(142,117, (106* self.players[0].hp_left) / self.players[0].hp ,6,3)
-
-                    pyxel.text(147,101,str(self.players[0].money),7)
-                    pyxel.blt(140,100,1,0,16,8,8,0)
-                    #--------UI joueur 2-----------
-                    pyxel.rect(5,133,110,10,0)
-                    pyxel.rect(7,135, (106* self.players[1].hp_left) / self.players[1].hp ,6,4)
-
-                    pyxel.text(10,146,str(self.players[1].money),7)
-                    pyxel.blt(3,145,1,0,16,8,8,0)
-
 
 
             case 2:
                 #shop
-                pyxel.cls(1)
-                pyxel.text(5,5,"SHOP",7)
-                pyxel.rect(20,10,210,50,5)
-                pyxel.rect(20,70,210,150,5)
+                background = App.ressourcePack.ui["shop"]["background"]
+                onBackgound = App.ressourcePack.ui["shop"]["on background"]
+                textColor = App.ressourcePack.ui["shop"]["text"]
+                pyxel.cls(background)
+                pyxel.text(5,5,"SHOP",textColor)
+                pyxel.rect(20,10,210,50,onBackgound)
+                pyxel.rect(20,70,210,150,onBackgound)
                 self.shopgrid.draw()
 
             case 3:
                 if self.winner:
+                    background = App.ressourcePack.players[str(self.winner.color)]["win"]["background"]
+                    textColor = App.ressourcePack.players[str(self.winner.color)]["win"]["text"]
                     pyxel.cls(self.winner.cursorColor)
                     text = f'{str(self.winner)} wins'
-                    pyxel.text(128-(len(text)*pyxel.FONT_WIDTH)/2,128,text,7)
+                    pyxel.text(128-(len(text)*pyxel.FONT_WIDTH)/2,128,text,textColor)
                 else:
+                    background = App.ressourcePack.ui["game draw"]["background"]
+                    textColor = App.ressourcePack.ui["game draw"]["text"]
                     pyxel.cls(13)
-                    pyxel.text(122,128,'tie',7)
+                    pyxel.text(122,128,'tie',textColor)
 
-                pyxel.text(70,137,"press spacebar to start again",7)
+                pyxel.text(70,137,"press spacebar to start again",textColor)
                 pyxel.circ(70,100,20,0)
                 pyxel.circ(186,100,20,0)
 
-            case 4:
-                pyxel.cls(1)
+            case 4: # page de choix du pack de texture
+                background = App.ressourcePack.ui["ressourcepack menu"]["background"]
+                pyxel.cls(background)
                 self.ressourcePackGrid.draw()
 
 
@@ -294,10 +314,11 @@ class Player:
     }
 
 
-    def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, name : str|None = None):
+    def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, color : int, name : str|None = None):
         self.id = id if (id in Player.keys_dict) else 0
         self.grid = GameGrid(self,grid_offset, *grid_colors)
         self.cursorColor = cursor_color
+        self.color = color
         self.roundpoint = False
 
         self.name : str = name
@@ -479,6 +500,65 @@ class SpriteAnimated(Sprite):
 
 
 class RessourcePack:
+    colorPalette : None|list[int] = None
+
+    ui : dict[str, dict[str, int]] = {
+        "main menu" : {
+            "background" : 1,
+            "text" : 7
+        },
+        "tutorial" : {
+            "background" : 1,
+            "text" : 7
+        },
+        "ressourcepack menu" : {
+            "background" : 1,
+            "primary" : 13,
+            "text" : 7
+        },
+        "shop" : {
+            "background" : 1,
+            "on background" : 5,
+            "primary" : 13,
+            "text" : 7
+        },
+        "game draw" : {
+            "background" : 13,
+            "text" : 7
+        }
+    }
+
+    players : dict[int,dict[str, int|list[int]|dict[str, int]]] = {
+        "0" : {
+            "cursor color" : 3,
+            "grid colors" : [3,11],
+            "tutorial color" : 3,
+            "win" : {
+                "background" : 9,
+                "text" : 7
+            },
+            "stat window" : {
+                "background" : 5,
+                "text" : 7,
+                "hp bar" : 5
+            }
+        },
+        "1" : {
+            "cursor color" : 9,
+            "grid colors" : [4,9],
+            "tutorial color" : 9,
+            "win" : {
+                "background" : 9,
+                "text" : 7
+            },
+            "stat window" : {
+                "background" : 14,
+                "text" : 7,
+                "hp bar" : 14
+            }
+        }
+    }
+
     boats : dict[str, dict[tuple[int,int], Sprite]] = {
         "boat1" : {
             (0,0) : {
@@ -614,6 +694,7 @@ class RessourcePack:
     def __init__(self):
         """n'est valide que pour les bateaux pour l'instant"""
         pyxel.load('assets/battleShip.pyxres')
+        RessourcePack.colorPalette = pyxel.colors.to_list()
     
     def get_available_ressourcepack(self) -> list[str]:
         return ['default'] + [directory for directory in os.listdir('assets') if (os.path.isdir(f'assets/{directory}') and 'ressources.json' in os.listdir(f'assets/{directory}'))]
@@ -624,7 +705,10 @@ class RessourcePack:
         
         if ressourcepack_name == 'default':
             pyxel.load('assets/battleShip.pyxres')
-            self.boats = App.ressourcePack.boats
+            self.colorPalette = RessourcePack.colorPalette
+            self.boats = RessourcePack.boats
+            self.keys = RessourcePack.keys
+            self.sets = RessourcePack.sets
             return
         
         pyxel.load(f'assets/{ressourcepack_name}/ressources.pyxres')
@@ -640,6 +724,18 @@ class RessourcePack:
                     self.boats[key][coord] = {}
                     for name, texture in state.items():
                         self.boats[key][coord][name] = Sprite(**texture) if any(kwarg in texture for kwarg in ['img', 'u', 'v', 'w', 'h']) else None
+
+        if 'ui' in file:
+            self.ui = file['ui']
+
+        if "players" in file:
+            self.players = file["players"]
+
+        if "keys" in file:
+            self.keys = file["keys"]
+
+        if "sets" in file:
+            self.sets = file["sets"]
 
 
 class Grid:
@@ -669,17 +765,14 @@ class Grid:
 
     def draw(self):
         x, y = self.coord
-        cindex = 0
-        maxcindex = len(self.colors)
+        maxindex = len(self.colors)
         pw, ph = 0,0
         for i in range(self.width):
             w = self.tileSize[0] if i not in self.specialTileSize['x'] else self.specialTileSize['x'][i]
             for j in range(self.height):
                 h = self.tileSize[1] if j not in self.specialTileSize['y'] else self.specialTileSize['y'][j]
-                pyxel.rect(x, y, w, h, self.colors[cindex])
+                pyxel.rect(x, y, w, h, self.colors[(i+j)%maxindex])
                 y+=h+self.gap[1]
-                cindex = (cindex+1)%maxcindex
-            cindex = (cindex+1)%maxcindex
             y = self.coord[1]
             x+=w+self.gap[0]
 
@@ -718,7 +811,6 @@ class RessourcePackGrid(Grid):
 
         if pyxel.btnp(self.player.keys_dict[self.player.id]["key shoot"]):
             App.ressourcePack.change_ressourcepack(self.ressourcePacks[self.cursor.pos[1]])
-            print("ok")
 
 
 
@@ -1099,7 +1191,7 @@ class ShopGrid(Grid):
     ]
 
     def __init__(self, player : Player):
-        super().__init__((27, 15), (4,2), (45, 43), 13, gap=(5,22), special_tile_size={"y" : {1 : 130}})
+        super().__init__((27, 15), (4,2), (45, 43), App.ressourcePack.ui["shop"]["primary"], gap=(5,22), special_tile_size={"y" : {1 : 130}})
         self.__player = player
         self.cursor = Cursor(player, self)
         self.setsInShop : list[list[DaddyBoat]] = []
@@ -1121,7 +1213,9 @@ class ShopGrid(Grid):
 
     def draw(self):
         super().draw()
-        pyxel.text(self.coord[0], self.coord[1]-8, str(self.player.money), 7)
+        self.colors = App.ressourcePack.ui["shop"]["primary"]
+        textColor = App.ressourcePack.ui["shop"]["text"]
+        pyxel.text(self.coord[0], self.coord[1]-8, str(self.player.money), textColor)
 
         self.cursor.draw()
 
@@ -1133,11 +1227,8 @@ class ShopGrid(Grid):
         for i in range(4):
             x = self.coord[0]+(self.tileSize[0]+self.gap[0])*i
             y = self.coord[1]
-            pyxel.text(x+4 ,y+4, self.setsInShop[i], 7)
+            pyxel.text(x+4 ,y+4, self.setsInShop[i], textColor)
             App.ressourcePack.sets[self.setsInShop[i]].draw(x+4,y+10)
-            
-        
-        
 
     def update(self):
         if pyxel.btnp(self.player.keys_dict[self.player.id]["key up"]):

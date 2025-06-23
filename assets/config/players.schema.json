@@ -1,0 +1,33 @@
+{
+  "$id": "players.schema.json",
+  "type": "object",
+  "patternProperties": {
+    "^[0-9]+$": {
+      "type": "object",
+      "properties": {
+        "cursor color": { "type": "integer" },
+        "grid colors": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "tutorial color": { "type": "integer" },
+        "win": {
+          "type": "object",
+          "properties": {
+            "background": { "type": "integer" },
+            "text": { "type": "integer" }
+          }
+        },
+        "stat window": {
+          "type": "object",
+          "properties": {
+            "background": { "type": "integer" },
+            "text": { "type": "integer" },
+            "hp bar": { "type": "integer" }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

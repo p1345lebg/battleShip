@@ -1,0 +1,16 @@
+{
+  "$id": "ui.schema.json",
+  "type": "object",
+  "patternProperties": {
+    ".*": {
+      "type": "object",
+      "properties": {
+        "background": { "type": "integer" },
+        "primary": { "type": "integer" },
+        "text": { "type": "integer" },
+        "on background": { "type": "integer" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "$id": "keys.schema.json",
+  "type": "object",
+  "patternProperties": {
+    ".*": { "$ref": "sprite.schema.json" }
+  }
+}

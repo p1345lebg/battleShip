@@ -1,0 +1,21 @@
+{
+  "$id": "sprite.schema.json",
+  "type": "object",
+  "properties": {
+    "img": { "type": "integer" },
+    "u": { "type": "number" },
+    "v": { "type": "number" },
+    "w": { "type": "number" },
+    "h": { "type": "number" },
+    "colkey": { "type": ["integer", "null"] },
+    "offset": {
+      "type": ["array", "null"],
+      "items": { "type": "integer" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "scale": { "type": ["number", "null"] },
+    "rotate": { "type": ["number", "null"] }
+  },
+  "required": ["img", "u", "v", "w", "h"]
+}

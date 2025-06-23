@@ -1,0 +1,18 @@
+{
+  "$id": "boats.schema.json",
+  "type": "object",
+  "patternProperties": {
+    ".*": {
+      "type": "object",
+      "patternProperties": {
+        "^\\([-0-9]+,[ ]*[-0-9]+\\)$": {
+          "type": "object",
+          "properties": {
+            "alive": { "$ref": "sprite.schema.json" },
+            "dead": { "$ref": "sprite.schema.json" }
+          }
+        }
+      }
+    }
+  }
+}
