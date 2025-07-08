@@ -103,6 +103,7 @@ class App:
                         if player.hp_left == 0 :
                             if player in self.playersAlive:
                                 self.playersAlive.remove(player)
+                
                 match len(self.playersAlive):
                     case 1: # victoire d'un des deux joueur
                         for player in self.players:
@@ -207,7 +208,7 @@ class App:
                     pyxel.blt(104,150, 2, 0, 32, 48, 16, 0)
                     pyxel.text(112, 170, 'to start', textColor)
 
-                    pyxel.text(128-44,200,"press  t  for tutorial",textColor)
+                    pyxel.text(128-44,200,"press     for tutorial",textColor)
                     pyxel.blt(128-44+22, 195, 2, 48, 32, 16, 16, 0, scale=0.8)
 
 
@@ -215,12 +216,13 @@ class App:
             case 1:
                 #graphismes jeu principal
                 if self.arrived_game > 0:
-                    pyxel.cls(13)
+                    pyxel.cls(App.ressourcePack.ui["game counter"]["background"])
+                    textColor = App.ressourcePack.ui["game counter"]["text"]
                     if self.arrived_game > 40 :
-                        pyxel.text(128,128,"3",7)
+                        pyxel.text(128,128,"3",textColor)
                     elif self.arrived_game > 20 :
-                        pyxel.text(128,128,"2",7)
-                    else : pyxel.text(128,128,"1",7)
+                        pyxel.text(128,128,"2",textColor)
+                    else : pyxel.text(128,128,"1",textColor)
 
                 else:
                     pyxel.cls(13)
@@ -272,7 +274,7 @@ class App:
                 if self.winner:
                     background = App.ressourcePack.players[str(self.winner.color)]["win"]["background"]
                     textColor = App.ressourcePack.players[str(self.winner.color)]["win"]["text"]
-                    pyxel.cls(self.winner.cursorColor)
+                    pyxel.cls(background)
                     text = f'{str(self.winner)} wins'
                     pyxel.text(128-(len(text)*pyxel.FONT_WIDTH)/2,128,text,textColor)
                 else:
@@ -314,11 +316,11 @@ class Player:
     }
 
 
-    def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, color : int, name : str|None = None):
+    def __init__(self, app : App, id, grid_offset : tuple[int,int], grid_colors : tuple[int,int], cursor_color : int, color : str, name : str|None = None):
         self.id = id if (id in Player.keys_dict) else 0
+        self.color = str(color)
         self.grid = GameGrid(self,grid_offset, *grid_colors)
-        self.cursorColor = cursor_color
-        self.color = color
+        self.cursorColor = App.ressourcePack.players[self.color]["cursor color"]
         self.roundpoint = False
 
         self.name : str = name
@@ -404,6 +406,7 @@ class Player:
             cursor.col = color
     
     def draw_cursors(self,gamestate):
+        self.cursorColor = App.ressourcePack.players[self.color]["cursor color"]
         for cursor in self.opponentGridCusor.values():
             cursor.drawcursor(gamestate)
 
@@ -500,8 +503,6 @@ class SpriteAnimated(Sprite):
 
 
 class RessourcePack:
-    colorPalette : None|list[int] = None
-
     ui : dict[str, dict[str, int]] = {
         "main menu" : {
             "background" : 1,
@@ -520,6 +521,10 @@ class RessourcePack:
             "background" : 1,
             "on background" : 5,
             "primary" : 13,
+            "text" : 7
+        },
+        "game counter" : {
+            "background" : 13,
             "text" : 7
         },
         "game draw" : {
@@ -708,6 +713,8 @@ class RessourcePack:
             self.boats = RessourcePack.boats
             self.keys = RessourcePack.keys
             self.sets = RessourcePack.sets
+            self.ui = RessourcePack.ui
+            self.players = RessourcePack.players
             return
         
         pyxel.load(f'assets/{ressourcepack_name}/ressources.pyxres')
@@ -731,12 +738,13 @@ class RessourcePack:
             self.players = file["players"]
 
         if "keys" in file:
-            self.keys = {}
-            for key in RessourcePack.sets.keys():
-                if key in file["keys"]:
-                    self.sets[key] = Sprite(**file["sets"][key])
-                else:
-                    self.sets[key] = Sprite(0, 0, 0, 16, 16)
+            for key, value in file.items():
+                if not hasattr(pyxel, key):
+                    continue
+                key = getattr(pyxel, key)
+                if not key in RessourcePack.sets:
+                    continue
+                self.keys[key] = Sprite(**value)
 
         if "sets" in file:
             self.sets = {}
@@ -802,10 +810,12 @@ class RessourcePackGrid(Grid):
 
     def draw(self):
         super().draw()
+        self.colors = [App.ressourcePack.ui["ressourcepack menu"]["primary"]]
+        textColor = App.ressourcePack.ui["ressourcepack menu"]["text"]
         for i in range(len(self.ressourcePacks)):
             x = 20
             y = 20+(self.tileSize[1]+self.gap[1])*i
-            pyxel.text(x,y, self.ressourcePacks[i], 7)
+            pyxel.text(x,y, self.ressourcePacks[i], textColor)
         self.cursor.draw()
 
     def update(self):
@@ -1012,6 +1022,7 @@ class GameGrid(Grid):
     def __init__(self, player, coord, *color):
         super().__init__(coord, (8,8), (16,16), *color)
         self.player : Player = player
+        self.colors = App.ressourcePack.players[self.player.color]["grid colors"]
         self.boats : list[DaddyBoat] = []
         self.coordinatesBoat : dict[tuple[int,int], DaddyBoat] # coordonnées ou sont les bateaux suivit du bateau a ces coordonnées
         self.explosions : SpriteGroup = SpriteGroup()
@@ -1026,6 +1037,7 @@ class GameGrid(Grid):
         return False
     
     def draw(self):
+        self.colors = App.ressourcePack.players[self.player.color]["grid colors"]
         super().draw()
         for boat in self.boats:
             boat.draw()
@@ -1033,7 +1045,8 @@ class GameGrid(Grid):
             explosion.draw()
 
     def generate_boat(self, boats_list : list[DaddyBoat]):
-        # reiniitalise la grille
+        self.player.hp_left = self.player.hp
+        # reinitalise la grille
         self.explosions.clear()
         self.boats = []
         self.coordinatesBoat = {}
@@ -1117,7 +1130,7 @@ class Upgrade:
         player.money -= self.price
         return True
 
-    def render(self, x, y):
+    def render(self, x, y, textColor : int):
         """rendu dans le shop"""
 
     def activate(self, player : Player):
@@ -1138,9 +1151,9 @@ class Upgrade1Hitpoint(Upgrade):
         player.hp += 1
         return True
 
-    def render(self, x, y):
-        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
-        pyxel.text(x+4, y+12, '+1 HITPOINT', 7)
+    def render(self, x, y, textColor : int):
+        pyxel.text(x+4, y+4, f"prix : {self.price}", textColor)
+        pyxel.text(x+4, y+12, '+1 HITPOINT', textColor)
 
 class Upgrade3Hitpoint(Upgrade):
     price = 40
@@ -1152,9 +1165,9 @@ class Upgrade3Hitpoint(Upgrade):
         player.hp += 3
         return True
 
-    def render(self, x, y):
-        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
-        pyxel.text(x+4, y+12, '+3 HITPOINT', 7)
+    def render(self, x, y, textColor : int):
+        pyxel.text(x+4, y+4, f"prix : {self.price}", textColor)
+        pyxel.text(x+4, y+12, '+3 HITPOINT', textColor)
 
 class UpgradeReloadtime(Upgrade):
     price = 17
@@ -1167,9 +1180,9 @@ class UpgradeReloadtime(Upgrade):
         player.frames_between_shoot[1] -= 1 if player.frames_between_shoot[1] > 0 else 0
         return True
 
-    def render(self, x, y):
-        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
-        pyxel.text(x+4, y+12, "- RELOAD TIME", 7)
+    def render(self, x, y, textColor : int):
+        pyxel.text(x+4, y+4, f"prix : {self.price}", textColor)
+        pyxel.text(x+4, y+12, "- RELOAD TIME", textColor)
 
 class UpgradeMoneyAtEnd3(Upgrade):
     price = 9
@@ -1181,9 +1194,9 @@ class UpgradeMoneyAtEnd3(Upgrade):
         player.bonus_money += 3
         return True
 
-    def render(self, x, y):
-        pyxel.text(x+4, y+4, f"prix : {self.price}", 7)
-        pyxel.text(x+4, y+12, "+3 MONEY @ END", 7)
+    def render(self, x, y, textColor : int):
+        pyxel.text(x+4, y+4, f"prix : {self.price}", textColor)
+        pyxel.text(x+4, y+12, "+3 MONEY @ END", textColor)
 
 
 class ShopGrid(Grid):
@@ -1221,8 +1234,8 @@ class ShopGrid(Grid):
         self.upgradesInShop = random.choices(self.upgrades, k=4)
 
     def draw(self):
-        super().draw()
         self.colors = [App.ressourcePack.ui["shop"]["primary"]]
+        super().draw()
         textColor = App.ressourcePack.ui["shop"]["text"]
         pyxel.text(self.coord[0], self.coord[1]-8, str(self.player.money), textColor)
 
@@ -1231,7 +1244,7 @@ class ShopGrid(Grid):
         for i in range(4):
             x = self.coord[0]+(self.tileSize[0]+self.gap[0])*i
             y = self.coord[1]+self.tileSize[1]+self.gap[1]
-            self.upgradesInShop[i].render(x, y)
+            self.upgradesInShop[i].render(x, y, App.ressourcePack.ui["shop"]["text"])
 
         for i in range(4):
             x = self.coord[0]+(self.tileSize[0]+self.gap[0])*i

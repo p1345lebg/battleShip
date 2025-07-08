@@ -1,0 +1,178 @@
+{
+  "$schema": "../config/config.schema.json",
+
+  "ui": {
+    "main menu": {
+      "background": 1,
+      "text": 4
+    },
+    "tutorial": {
+      "background": 1,
+      "text": 4
+    },
+    "ressourcepack menu": {
+      "background": 1,
+      "primary": 0,
+      "text": 4
+    },
+    "shop": {
+      "background": 1,
+      "on background": 0,
+      "primary": 10,
+      "text": 4
+    },
+    "game counter" : {
+      "background" : 1,
+      "text" : 4
+    },
+    "game draw": {
+      "background": 1,
+      "text": 4
+    }
+  },
+
+  "players": {
+    "0": {
+      "cursor color": 2,
+      "grid colors": [0, 8],
+      "tutorial color": 2,
+      "win": {
+        "background": 1,
+        "text": 2
+      },
+      "stat window": {
+        "background": 1,
+        "text": 2,
+        "hp bar": 2
+      }
+    },
+    "1": {
+      "cursor color": 3,
+      "grid colors": [0, 9],
+      "tutorial color": 3,
+      "win": {
+        "background": 1,
+        "text": 3
+      },
+      "stat window": {
+        "background": 1,
+        "text": 3,
+        "hp bar": 3
+      }
+    }
+  },
+
+  "boats": {
+    "boat1": {
+      "0,0": {
+        "alive": { "img": 0, "u": 0, "v": 0, "w": 16, "h": 16, "colkey": 0 }
+      }
+    },
+    "boat2x": {
+      "0,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0 }
+      },
+      "1,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 180 }
+      }
+    },
+    "boat2y": {
+      "0,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 90 }
+      },
+      "0,1": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": -90 }
+      }
+    },
+    "boat3x": {
+      "0,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0 }
+      },
+      "1,0": {
+        "alive": { "img": 0, "u": 32, "v": 0, "w": 16, "h": 16, "colkey": 0 }
+      },
+      "2,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 180 }
+      }
+    },
+
+    "boat3y": {
+      "0,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 90 }
+      },
+      "0,1": {
+        "alive": { "img": 0, "u": 32, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 90 }
+      },
+      "0,2": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": -90 }
+      }
+    },
+
+    "boatLtl": {
+      "0,0": {
+        "alive": { "img": 0, "u": 48, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": -90 }
+      },
+      "1,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 180 }
+      },
+      "0,1": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": -90 }
+      }
+    },
+
+    "boatLtr": {
+      "0,0": {
+        "alive": { "img": 0, "u": 48, "v": 0, "w": 16, "h": 16, "colkey": 0 }
+      },
+      "-1,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0 }
+      },
+      "0,1": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": -90 }
+      }
+    },
+
+    "boatLbl": {
+      "0,0": {
+        "alive": { "img": 0, "u": 48, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 180 }
+      },
+      "1,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 180 }
+      },
+      "0,-1": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 90 }
+      }
+    },
+
+    "boatLbr": {
+      "0,0": {
+        "alive": { "img": 0, "u": 48, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 90 }
+      },
+      "-1,0": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0 }
+      },
+      "0,-1": {
+        "alive": { "img": 0, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0, "rotate": 90 }
+      }
+    }
+  },
+
+  "keys": {
+    "KEY_UP": { "img": 2, "u": 0, "v": 0, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_DOWN": { "img": 2, "u": 16, "v": 0, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_LEFT": { "img": 2, "u": 32, "v": 0, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_RIGHT": { "img": 2, "u": 48, "v": 0, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_M": { "img": 2, "u": 64, "v": 0, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_Z": { "img": 2, "u": 0, "v": 16, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_S": { "img": 2, "u": 16, "v": 16, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_Q": { "img": 2, "u": 32, "v": 16, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_D": { "img": 2, "u": 48, "v": 16, "w": 16, "h": 16, "colkey": 0 },
+    "KEY_V": { "img": 2, "u": 64, "v": 16, "w": 16, "h": 16, "colkey": 0 }
+  },
+
+  "sets": {
+    "default": { "img": 0, "u": 0, "v": 64, "w": 32, "h": 32, "colkey": 10 },
+    "one": { "img": 0, "u": 32, "v": 64, "w": 32, "h": 32, "colkey": 10 },
+    "all": { "img": 0, "u": 64, "v": 64, "w": 32, "h": 32, "colkey": 10 }
+  }
+}

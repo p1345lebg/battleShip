@@ -21,6 +21,10 @@
       "primary": 13,
       "text": 7
     },
+    "game counter" : {
+      "background" : 13,
+      "text" : 7
+    },
     "game draw": {
       "background": 13,
       "text": 7
