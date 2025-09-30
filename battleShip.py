@@ -703,7 +703,7 @@ class RessourcePack:
     
     def get_available_ressourcepack(self) -> list[str]:
         undisponible_packs = ['default', 'theme sombre']
-        return ['default'] + [directory for directory in os.listdir('assets') if (directory not in undisponible_packs) and (os.path.isdir(f'assets/{directory}') and 'ressources.json' in os.listdir(f'assets/{directory}'))]
+        return ['default', 'theme sombre'] + [directory for directory in os.listdir('assets') if (directory not in undisponible_packs) and (os.path.isdir(f'assets/{directory}') and 'ressources.json' in os.listdir(f'assets/{directory}'))]
     
     def change_ressourcepack(self, ressourcepack_name : str) -> None:
         if not ressourcepack_name in self.get_available_ressourcepack():
