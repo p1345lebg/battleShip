@@ -151,6 +151,8 @@ class App:
 
                         
             case 3:
+                if pyxel.btnp(pyxel.KEY_R):
+                    App.gamestate = 4
                 
                 if pyxel.btnp(pyxel.KEY_SPACE):
                     self.playersAlive = [player for player in self.players]
@@ -161,6 +163,9 @@ class App:
                     App.gamestate = 1
 
             case 4:
+                if pyxel.btnp(pyxel.KEY_R):
+                    App.gamestate = 4
+                
                 self.ressourcePackGrid.update()
                 
 
