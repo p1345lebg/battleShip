@@ -15,7 +15,6 @@ class App:
         self.ressourcePack = App.ressourcePack
 
         self.upgrades = [("+1 HITPOINT",15),("+3 HITPOINTS",40),("-RELOADTIME",17),("+3 MONEY @ END", 9)]
-        self.winner : Player|None = None
         self.shoplist = []
         self.arrived_shop = True
         self.arrived_game = 60
@@ -23,10 +22,12 @@ class App:
         self.add_player(Player(self, 0, (0,0), (3,11), 3, 0, name="player 1"))
         self.add_player(Player(self, 1, (128,128), (4,9), 9, 1, name="player 2"))
         self.playersAlive : list[Player] = [player for player in self.players]
+        self.winner : Player|None = None
+        self.looser : list[Player] = [self.players[0]]
         self.tutorial = False
         self.shopgrid = ShopGrid(self.players[0])
+        self.go_to_shop : bool = False
         self.ressourcePackGrid = RessourcePackGrid(self.players[0])
-        
 
         pyxel.run(self.update,self.draw)
 
@@ -110,8 +111,11 @@ class App:
                     case 1: # victoire d'un des deux joueur
                         for player in self.players:
                             player.money+=player.bonus_money
-                        self.playersAlive[0].roundpoint = True
                         self.winner = self.playersAlive[0]
+                        if self.winner.roundpoint:
+                            self.go_to_shop = True
+                        else:
+                            self.winner.roundpoint = True
                         App.gamestate = 3
                     case 0: # égalié
                         for player in self.players:
@@ -153,13 +157,17 @@ class App:
 
                         
             case 3:
-                if pyxel.btnp(pyxel.KEY_SPACE):
-                    self.playersAlive = [player for player in self.players]
-                    for player in self.players:
-                        player.hp_left = player.hp
-                        player.place_set()
-                    self.arrived_game = 60
-                    App.gamestate = 1
+                if not self.go_to_shop:
+                    if pyxel.btnp(pyxel.KEY_SPACE):
+                        self.playersAlive = [player for player in self.players]
+                        for player in self.players:
+                            player.hp_left = player.hp
+                            player.place_set()
+                        self.arrived_game = 60
+                        App.gamestate = 1
+                else :
+                    
+                    App.gamestate = 2
 
             case 4:
                 if pyxel.btnp(pyxel.KEY_R):
