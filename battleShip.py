@@ -70,7 +70,9 @@ class App:
                 if pyxel.btnp(pyxel.KEY_T) :
                     self.tutorial = not self.tutorial                
                     # logique pour le main menu
-
+                
+                if pyxel.btnp(pyxel.KEY_R):
+                    App.gamestate = 4
 
 
             case 1:
@@ -151,9 +153,6 @@ class App:
 
                         
             case 3:
-                if pyxel.btnp(pyxel.KEY_R):
-                    App.gamestate = 4
-                
                 if pyxel.btnp(pyxel.KEY_SPACE):
                     self.playersAlive = [player for player in self.players]
                     for player in self.players:
@@ -164,7 +163,7 @@ class App:
 
             case 4:
                 if pyxel.btnp(pyxel.KEY_R):
-                    App.gamestate = 4
+                    App.gamestate = 1
                 
                 self.ressourcePackGrid.update()
                 
