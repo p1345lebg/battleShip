@@ -6,5 +6,5 @@ Local winner tied
 - Using pyxel library
 - Theme : "Bataille Navale"
 
-## link to play the game (loads very slowly:
+## link to play the game (loads very slowly) :
 https://kitao.github.io/pyxel/wasm/launcher/?run=p1345lebg.battleShip.battleShip
